@@ -4,23 +4,27 @@ server:
 jwt:
   secret: WS5y43NO8hme4sbPyEgIcCaR7G5NgSXlXKyc159gLhloaNAP/28XZKPCQCCDd8vp3v1NJpIic4uMX0CVbPR7+A==
 
-#spring:
-#  cloud:
-#    gateway:
-#      mvc:
-#        routes:
-#          - id: userservice
-#            uri: http://userservice:8080
-#            predicates:
-#              - Path=/users/**, /sessions/**  # Объединяем пути в один предикат
-#          - id: bookingsservice
-#            uri: http://bookingservice:8080
-#            predicates:
-#              - Path=/bookings/**
-#          - id: administrationservice
-#            uri: http://administrationservice:8080
-#            predicates:
-#              - Path=/balance/**, /documents/**
+internal:
+  secret: bbc1edb7448e4c177cc8519017ccfcfd8b23b87cc7abd735ac498a2b971670d6cd7f3f24679ba6212bc67ce2fe8f643fc4787071d407e31af2ca05ea28da709c
+  lifetime: 10s
+
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: userservice
+          uri: http://userservice:8080
+          predicates:
+            - Path=/users/**, /sessions/**  # Объединяем пути в один предикат
+        - id: bookingsservice
+          uri: http://bookingservice:8080
+          predicates:
+              - Path=/bookings/**
+        - id: administrationservice
+          uri: http://administrationservice:8080
+          predicates:
+            - Path=/balance/**, /documents/**
 
 
 

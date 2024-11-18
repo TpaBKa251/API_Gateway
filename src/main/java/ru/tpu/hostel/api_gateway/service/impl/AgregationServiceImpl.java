@@ -1,21 +1,22 @@
 package ru.tpu.hostel.api_gateway.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.client.AdminClient;
 import ru.tpu.hostel.api_gateway.client.BookingsClient;
 import ru.tpu.hostel.api_gateway.client.UserClient;
+import ru.tpu.hostel.api_gateway.dto.ActiveEventDto;
 import ru.tpu.hostel.api_gateway.dto.AdminResponseDto;
 import ru.tpu.hostel.api_gateway.dto.BalanceResponseDto;
+import ru.tpu.hostel.api_gateway.dto.CertificateDto;
 import ru.tpu.hostel.api_gateway.dto.UserResponseDto;
-import ru.tpu.hostel.api_gateway.dto.UserResponseWithRoleDto;
 import ru.tpu.hostel.api_gateway.dto.WholeUserResponseDto;
-import ru.tpu.hostel.api_gateway.dto_library.response.BookingResponseDto;
-import ru.tpu.hostel.api_gateway.dto_library.response.DocumentResponseDto;
+import ru.tpu.hostel.api_gateway.dto.UserResponseWithRoleDto;
 import ru.tpu.hostel.api_gateway.enums.BookingStatus;
 import ru.tpu.hostel.api_gateway.enums.DocumentType;
 import ru.tpu.hostel.api_gateway.filter.JwtAuthenticationFilter;
@@ -29,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AgregationServiceImpl implements AgregationService {
@@ -40,110 +40,124 @@ public class AgregationServiceImpl implements AgregationService {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Override
-    public WholeUserResponseDto getWholeUser(Authentication authentication) {
+    public Mono<WholeUserResponseDto> getWholeUser(Authentication authentication) {
 
         UUID userId = jwtAuthenticationFilter.getUserIdFromToken(authentication);
-        log.info(userId.toString());
 
-        UserResponseWithRoleDto userInfo = userClient.getUserWithRoles(userId);
-        String responseBalance = administrationClient.getBalanceShort(userId).toString();
+        // Получаем данные пользователя
+        Mono<UserResponseWithRoleDto> userInfoMono = userClient.getUserWithRoles(userId);
 
-        String jsonBody = responseBalance.substring(
-                responseBalance.indexOf("{"), responseBalance.lastIndexOf("}") + 1
+        // Получаем баланс
+        Mono<BigDecimal> balanceMono = administrationClient.getBalanceShort(userId)
+                .flatMap(response -> {
+                    String jsonBody = response.toString().substring(
+                            response.toString().indexOf("{"), response.toString().lastIndexOf("}") + 1);
+                    try {
+                        JSONObject jsonObject = new JSONObject(jsonBody);
+                        return Mono.just(BigDecimal.valueOf(jsonObject.getDouble("balance")));
+                    } catch (JSONException e) {
+                        return Mono.empty();
+                    }
+                });
+
+        // Получаем документы
+        Mono<CertificateDto> pediculosisMono = administrationClient.getDocumentByType(userId, DocumentType.CERTIFICATE);
+        Mono<CertificateDto> fluorographyMono = administrationClient.getDocumentByType(userId, DocumentType.FLUOROGRAPHY);
+
+        // Получаем активные бронирования
+        Flux<ActiveEventDto> activeBookingsFlux = Flux.concat(
+                bookingsClient.getAllByStatus(BookingStatus.BOOKED, userId),
+                bookingsClient.getAllByStatus(BookingStatus.IN_PROGRESS, userId)
         );
-        JSONObject jsonObject;
-        BigDecimal balance = null;
-        try {
-            jsonObject = new JSONObject(jsonBody);
-            balance = BigDecimal.valueOf(jsonObject.getDouble("balance"));
-        } catch (JSONException ignored) {
-        }
 
-        DocumentResponseDto pediculosis = administrationClient.getDocumentByType(userId, DocumentType.CERTIFICATE);
-        DocumentResponseDto fluorography = administrationClient.getDocumentByType(userId, DocumentType.FLUOROGRAPHY);
-
-        List<BookingResponseDto> activeBookings = new ArrayList<>();
-        activeBookings.addAll(bookingsClient.getAllByStatus(BookingStatus.BOOKED, userId));
-        activeBookings.addAll(bookingsClient.getAllByStatus(BookingStatus.IN_PROGRESS, userId));
-
-
-        return UserMapper.mapToUserResponseDto(
-                userInfo,
-                balance,
-                pediculosis,
-                fluorography,
-                activeBookings
-        );
+        // Комбинируем все данные
+        return Mono.zip(userInfoMono, balanceMono, pediculosisMono, fluorographyMono, activeBookingsFlux.collectList())
+                .map(tuple -> UserMapper.mapToUserResponseDto(
+                        tuple.getT1(), // UserResponseWithRoleDto
+                        tuple.getT2(), // Balance
+                        tuple.getT3(), // Pediculosis
+                        tuple.getT4(), // Fluorography
+                        tuple.getT5()  // List<ActiveEventDto>
+                ));
     }
+
 
     @Override
-    public List<AdminResponseDto> getAllUsers(Authentication authentication) {
-        Map<UUID, AdminResponseDto> adminResponseDtoMap = new HashMap<>();
+    public Flux<List<AdminResponseDto>> getAllUsers(Authentication authentication) {
 
-        List<UserResponseDto> users = userClient.getAllUsers();
-        List<BalanceResponseDto> balances = administrationClient.getAllBalances();
-        List<DocumentResponseDto> certificates = administrationClient.getAllDocuments();
+        // Получаем данные всех пользователей
+        Flux<UserResponseDto> usersFlux = userClient.getAllUsers();
+        Flux<BalanceResponseDto> balancesFlux = administrationClient.getAllBalances();
+        Flux<CertificateDto> certificatesFlux = administrationClient.getAllDocuments();
 
-        for (UserResponseDto user : users) {
-            adminResponseDtoMap.put(user.id(), new AdminResponseDto(
-                    user.id(),
-                    user.firstName(),
-                    user.lastName(),
-                    user.middleName(),
-                    user.roomNumber(),
-                    null,
-                    null,
-                    null
-            ));
-        }
+        return Flux.zip(usersFlux.collectMap(UserResponseDto::id, user -> user),
+                        balancesFlux.collectMap(BalanceResponseDto::user, balance -> balance),
+                        certificatesFlux.collectList())
+                .map(tuple -> {
+                    Map<UUID, UserResponseDto> usersMap = tuple.getT1();
+                    Map<UUID, BalanceResponseDto> balancesMap = tuple.getT2();
+                    List<CertificateDto> certificates = tuple.getT3();
 
-        for (BalanceResponseDto balance : balances) {
-            AdminResponseDto userData = adminResponseDtoMap.get(balance.user());
+                    // Создаём результирующую карту
+                    Map<UUID, AdminResponseDto> adminResponseDtoMap = new HashMap<>();
+                    usersMap.forEach((id, user) -> adminResponseDtoMap.put(id, new AdminResponseDto(
+                            user.id(),
+                            user.firstName(),
+                            user.lastName(),
+                            user.middleName(),
+                            user.roomNumber(),
+                            null, null, null
+                    )));
 
-            if (userData != null) {
-                adminResponseDtoMap.put(balance.user(), new AdminResponseDto(
-                        userData.id(),
-                        userData.firstName(),
-                        userData.lastName(),
-                        userData.middleName(),
-                        userData.room(),
-                        null,
-                        null,
-                        balance.balance()
-                ));
-            }
-        }
+                    // Добавляем балансы
+                    balancesMap.forEach((id, balance) -> {
+                        AdminResponseDto userData = adminResponseDtoMap.get(id);
+                        if (userData != null) {
+                            adminResponseDtoMap.put(id, new AdminResponseDto(
+                                    userData.id(),
+                                    userData.firstName(),
+                                    userData.lastName(),
+                                    userData.middleName(),
+                                    userData.room(),
+                                    userData.pediculosis(),
+                                    userData.fluorography(),
+                                    balance.balance()
+                            ));
+                        }
+                    });
 
-        for (DocumentResponseDto certificate : certificates) {
-            AdminResponseDto userWithBalanceData = adminResponseDtoMap.get(certificate.user());
+                    // Добавляем документы
+                    for (CertificateDto certificate : certificates) {
+                        AdminResponseDto userWithBalanceData = adminResponseDtoMap.get(certificate.user());
+                        if (userWithBalanceData != null) {
+                            if (certificate.type() == DocumentType.CERTIFICATE) {
+                                adminResponseDtoMap.put(certificate.user(), new AdminResponseDto(
+                                        userWithBalanceData.id(),
+                                        userWithBalanceData.firstName(),
+                                        userWithBalanceData.lastName(),
+                                        userWithBalanceData.middleName(),
+                                        userWithBalanceData.room(),
+                                        certificate,
+                                        userWithBalanceData.fluorography(),
+                                        userWithBalanceData.balance()
+                                ));
+                            } else {
+                                adminResponseDtoMap.put(certificate.user(), new AdminResponseDto(
+                                        userWithBalanceData.id(),
+                                        userWithBalanceData.firstName(),
+                                        userWithBalanceData.lastName(),
+                                        userWithBalanceData.middleName(),
+                                        userWithBalanceData.room(),
+                                        userWithBalanceData.pediculosis(),
+                                        certificate,
+                                        userWithBalanceData.balance()
+                                ));
+                            }
+                        }
+                    }
 
-            if (userWithBalanceData != null) {
-                if (certificate.type() == DocumentType.CERTIFICATE) {
-                    adminResponseDtoMap.put(certificate.user(), new AdminResponseDto(
-                            userWithBalanceData.id(),
-                            userWithBalanceData.firstName(),
-                            userWithBalanceData.lastName(),
-                            userWithBalanceData.middleName(),
-                            userWithBalanceData.room(),
-                            certificate,
-                            userWithBalanceData.fluorography(),
-                            userWithBalanceData.balance()
-                    ));
-                } else {
-                    adminResponseDtoMap.put(certificate.user(), new AdminResponseDto(
-                            userWithBalanceData.id(),
-                            userWithBalanceData.firstName(),
-                            userWithBalanceData.lastName(),
-                            userWithBalanceData.middleName(),
-                            userWithBalanceData.room(),
-                            userWithBalanceData.pediculosis(),
-                            certificate,
-                            userWithBalanceData.balance()
-                    ));
-                }
-            }
-        }
-
-        return new ArrayList<>(adminResponseDtoMap.values());
+                    return new ArrayList<>(adminResponseDtoMap.values());
+                });
     }
+
 }

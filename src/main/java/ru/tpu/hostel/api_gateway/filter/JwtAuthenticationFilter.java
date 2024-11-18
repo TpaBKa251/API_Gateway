@@ -4,23 +4,24 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.List;
@@ -30,7 +31,8 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter implements WebFilter {
+
     @Value("${jwt.secret}")
     private String secretKey;
 
@@ -41,35 +43,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     );
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        String endpoint = request.getRequestURI();
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        String endpoint = exchange.getRequest().getURI().getPath();
 
+        // Разрешенные эндпоинты пропускаем без проверки
         if (PERMITTED_ENDPOINTS.contains(endpoint)) {
-            return;
+            return chain.filter(exchange);
         }
 
-        String token = extractToken(request);
+        // Извлечение токена
+        String token = extractToken(exchange.getRequest().getHeaders());
 
-        if (!validateToken(token)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
+        if (token == null || !validateToken(token)) {
+            return Mono.empty(); // Неавторизованный запрос
         }
 
+        // Извлечение Claims и установка SecurityContext
         Claims claims = getClaimsFromToken(token);
 
-        // Устанавливаем аутентификацию в SecurityContext
-        setAuthentication(claims);
-
-        // Добавляем данные в заголовки запроса
-        MutableHttpServletRequest mutableRequest = new MutableHttpServletRequest(request);
-        mutableRequest.addHeader("X-User-Id", claims.get("userId", String.class));
-
-        filterChain.doFilter(mutableRequest, response);
+        return Mono.justOrEmpty(createAuthentication(claims))
+                .flatMap(authentication -> {
+                    SecurityContext context = new SecurityContextImpl(authentication);
+                    return chain.filter(exchange).contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)));
+                });
     }
 
-    private String extractToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
+    private String extractToken(HttpHeaders headers) {
+        String authHeader = headers.getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return null;
         }
@@ -84,6 +84,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .parseClaimsJws(token);
             return true;
         } catch (Exception e) {
+            log.error("Invalid token: {}", e.getMessage());
             return false;
         }
     }
@@ -96,9 +97,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .getBody();
     }
 
-    private void setAuthentication(Claims claims) {
+    private Authentication createAuthentication(Claims claims) {
         if (claims == null) {
-            return;
+            return null;
         }
 
         String userId = claims.get("userId", String.class);
@@ -106,22 +107,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (userId == null || roles == null) {
             log.error("User ID or roles are null");
-            return;
+            return null;
         }
 
         List<GrantedAuthority> authorities = roles.stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .collect(Collectors.toList());
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userId, claims, authorities);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return new UsernamePasswordAuthenticationToken(userId, claims, authorities);
     }
-
 
     public UUID getUserIdFromToken(Authentication authentication) {
         return UUID.fromString(authentication.getPrincipal().toString());
     }
-
 
     public UUID getUserIdFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
@@ -133,7 +131,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private Key getSigningKey() {
-        return new SecretKeySpec(secretKey.getBytes(), SignatureAlgorithm.HS512.getJcaName());
+        return new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS512.getJcaName());
     }
 }
+
 

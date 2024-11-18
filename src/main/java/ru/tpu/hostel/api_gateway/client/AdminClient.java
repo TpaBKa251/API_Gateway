@@ -1,85 +1,53 @@
 package ru.tpu.hostel.api_gateway.client;
 
-import jakarta.validation.Valid;
-import org.springframework.cloud.openfeign.FeignClient;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.dto.BalanceResponseDto;
-import ru.tpu.hostel.api_gateway.dto_library.request.BalanceRequestDto;
-import ru.tpu.hostel.api_gateway.dto_library.request.DocumentEditRequestDto;
-import ru.tpu.hostel.api_gateway.dto_library.request.DocumentRequestDto;
-import ru.tpu.hostel.api_gateway.dto_library.response.BalanceShortResponseDto;
-import ru.tpu.hostel.api_gateway.dto_library.response.DocumentResponseDto;
+import ru.tpu.hostel.api_gateway.dto.CertificateDto;
 import ru.tpu.hostel.api_gateway.enums.DocumentType;
 
-import java.util.List;
 import java.util.UUID;
 
 @Component
-@FeignClient(name = "administration-administrationservice", url = "http://administrationservice:8080")
-public interface AdminClient {
+public class AdminClient {
 
-    // Балансы
-    @PostMapping("/balance")
-    BalanceResponseDto addBalance(
-            @RequestBody BalanceRequestDto balanceRequestDto
-    );
+    private final WebClient webClient;
 
-    @PatchMapping("/balance/edit")
-    BalanceResponseDto editBalance(
-            @RequestBody BalanceRequestDto balanceRequestDto
-    );
+    public AdminClient(@Qualifier("adminWebClient") WebClient webClient) {
+        this.webClient = webClient;
+    }
 
-    @PatchMapping("/balance/edit/adding")
-    BalanceResponseDto editAddBalance(
-            @RequestBody BalanceRequestDto balanceRequestDto
-    );
+    public Mono<?> getBalanceShort(UUID id) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("balance/get/short/{id}").build(id))
+                .retrieve()
+                .toEntity(Object.class);
+    }
 
-    @GetMapping("/balance/get/{id}")
-    BalanceResponseDto getBalance(
-            @PathVariable UUID id
-    );
+    public Flux<BalanceResponseDto> getAllBalances() {
+        return webClient.get()
+                .uri("balance/get/all")
+                .retrieve()
+                .bodyToFlux(BalanceResponseDto.class);
+    }
 
-    @GetMapping("/balance/get/all")
-    List<BalanceResponseDto> getAllBalances();
+    public Mono<CertificateDto> getDocumentByType(UUID userId, DocumentType documentType) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("documents/get/type/{documentType}/user/{userId}")
+                        .build(documentType, userId))
+                .retrieve()
+                .bodyToMono(CertificateDto.class);
+    }
 
-    @GetMapping("/balance/get/short/{id}")
-    BalanceShortResponseDto getBalanceShort(
-            @PathVariable UUID id
-    );
-
-    // Документы
-    @PostMapping("/documents")
-    DocumentResponseDto addDocument(
-            @RequestBody DocumentRequestDto documentRequestDto
-    );
-
-    @PatchMapping("/documents/edit")
-    DocumentResponseDto editDocument(
-            @RequestBody DocumentEditRequestDto documentEditRequestDto
-    );
-
-    @GetMapping("/documents/get/by/id/{id}")
-    DocumentResponseDto getDocumentById(
-            @PathVariable UUID id
-    );
-
-    @GetMapping("/documents/get/all/user/{userId}")
-    List<DocumentResponseDto> getAllDocumentsByUser(
-            @PathVariable UUID userId
-    );
-
-    @GetMapping("/documents/get/all")
-    List<DocumentResponseDto> getAllDocuments();
-
-    @GetMapping("/documents/get/type/{documentType}/user/{userId}")
-    DocumentResponseDto getDocumentByType(
-            @PathVariable UUID userId,
-            @PathVariable DocumentType documentType
-    );
+    public Flux<CertificateDto> getAllDocuments() {
+        return webClient.get()
+                .uri("documents/get/all")
+                .retrieve()
+                .bodyToFlux(CertificateDto.class);
+    }
 }
 
