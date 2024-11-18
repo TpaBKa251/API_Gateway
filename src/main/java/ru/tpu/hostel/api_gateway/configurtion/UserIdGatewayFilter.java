@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.filter.JwtAuthenticationFilter;
 
 import java.net.URI;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -20,8 +21,22 @@ public class UserIdGatewayFilter implements GlobalFilter, Ordered {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    private static final List<String> UNMODIFIABLE_REQUESTS = List.of(
+            "users/get/by/id",
+            "users/get/with/roles",
+            "users/get/all",
+            "bookings/available/timeline",
+            "bookings/available/timeslot",
+            "balance"
+    );
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
+        if (!shouldModifyRequest(exchange.getRequest().getURI().getPath())) {
+            return chain.filter(exchange);
+        }
+
         return exchange.getPrincipal()
                 .cast(Authentication.class) // Получаем аутентификацию
                 .map(jwtAuthenticationFilter::getUserIdFromToken) // Извлекаем userId
@@ -46,6 +61,16 @@ public class UserIdGatewayFilter implements GlobalFilter, Ordered {
                     return chain.filter(modifiedExchange);
                 })
                 .switchIfEmpty(chain.filter(exchange)); // Если нет аутентификации, продолжаем без изменений
+    }
+
+    private boolean shouldModifyRequest(String request) {
+        for (String unmodifiableRequest : UNMODIFIABLE_REQUESTS) {
+            if (request.contains(unmodifiableRequest)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 

@@ -29,7 +29,8 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable) // Отключение CSRF
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Подключаем CORS из существующей конфигурации
                 .authorizeExchange(auth -> auth
-                        .pathMatchers(HttpMethod.GET, "/api/get/all/users").hasRole("ADMINISTRATION")
+                        .pathMatchers(HttpMethod.POST, "/api/get/all/users").hasRole("ADMINISTRATION")
+                        //.pathMatchers(HttpMethod.GET, "/api/get/all/users").hasRole("ADMINISTRATION")
                         .pathMatchers(HttpMethod.POST, "/balance").hasRole("ADMINISTRATION")
                         .pathMatchers(HttpMethod.PATCH, "/balance/edit").hasRole("ADMINISTRATION")
                         .pathMatchers(HttpMethod.PATCH, "/balance/edit/adding").hasRole("ADMINISTRATION")
@@ -41,7 +42,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/users/get/all").hasRole("ADMINISTRATION")
                         .pathMatchers(HttpMethod.POST, "/users").permitAll()
                         .pathMatchers(HttpMethod.POST, "/sessions").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/sessions/auth/token").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/sessions/auth/token").permitAll()
                         .anyExchange().authenticated() // Для всех остальных маршрутов требуется аутентификация
                 )
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION) // Подключение JWT-фильтра

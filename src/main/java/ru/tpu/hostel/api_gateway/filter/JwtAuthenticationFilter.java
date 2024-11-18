@@ -20,9 +20,11 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
+import ru.tpu.hostel.api_gateway.exception.ServiceUnavailableException;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.security.Key;
 import java.util.List;
 import java.util.UUID;
@@ -55,7 +57,7 @@ public class JwtAuthenticationFilter implements WebFilter {
         String token = extractToken(exchange.getRequest().getHeaders());
 
         if (token == null || !validateToken(token)) {
-            return Mono.empty(); // Неавторизованный запрос
+            throw new ServiceUnavailableException("Вы не авторизованы");
         }
 
         // Извлечение Claims и установка SecurityContext
