@@ -12,5 +12,5 @@ public interface AgregationService {
 
     Mono<WholeUserResponseDto> getWholeUser(Authentication authentication);
 
-    Flux<List<AdminResponseDto>> getAllUsers(Authentication authentication);
+    Flux<AdminResponseDto> getAllUsers(Authentication authentication);
 }

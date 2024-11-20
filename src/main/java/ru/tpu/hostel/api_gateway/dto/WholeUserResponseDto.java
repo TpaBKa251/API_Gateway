@@ -14,6 +14,6 @@ public record WholeUserResponseDto(
         BigDecimal balance,
         CertificateDto fluorography,
         CertificateDto pediculosis,
-        List<ActiveEventDto> activeEvents
+        List<ActiveEventDtoResponse> activeEvents
 ) {
 }

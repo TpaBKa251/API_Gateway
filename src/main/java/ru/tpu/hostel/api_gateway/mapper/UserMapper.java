@@ -2,6 +2,7 @@ package ru.tpu.hostel.api_gateway.mapper;
 
 import org.springframework.stereotype.Component;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventDto;
+import ru.tpu.hostel.api_gateway.dto.ActiveEventDtoResponse;
 import ru.tpu.hostel.api_gateway.dto.CertificateDto;
 import ru.tpu.hostel.api_gateway.dto.WholeUserResponseDto;
 import ru.tpu.hostel.api_gateway.dto.UserResponseWithRoleDto;
@@ -17,7 +18,7 @@ public class UserMapper {
             BigDecimal balance,
             CertificateDto pediculosis,
             CertificateDto fluorography,
-            List<ActiveEventDto> activeEvents
+            List<ActiveEventDtoResponse> activeEvents
     ) {
         return new WholeUserResponseDto(
                 userResponseWithRoleDto.id(),

@@ -11,6 +11,7 @@ import ru.tpu.hostel.api_gateway.client.AdminClient;
 import ru.tpu.hostel.api_gateway.client.BookingsClient;
 import ru.tpu.hostel.api_gateway.client.UserClient;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventDto;
+import ru.tpu.hostel.api_gateway.dto.ActiveEventDtoResponse;
 import ru.tpu.hostel.api_gateway.dto.AdminResponseDto;
 import ru.tpu.hostel.api_gateway.dto.BalanceResponseDto;
 import ru.tpu.hostel.api_gateway.dto.CertificateDto;
@@ -61,8 +62,10 @@ public class AgregationServiceImpl implements AgregationService {
                 });
 
         // Получаем документы
-        Mono<CertificateDto> pediculosisMono = administrationClient.getDocumentByType(userId, DocumentType.CERTIFICATE);
-        Mono<CertificateDto> fluorographyMono = administrationClient.getDocumentByType(userId, DocumentType.FLUOROGRAPHY);
+        Mono<CertificateDto> pediculosisMono = administrationClient
+                .getDocumentByType(userId, DocumentType.CERTIFICATE);
+        Mono<CertificateDto> fluorographyMono = administrationClient
+                .getDocumentByType(userId, DocumentType.FLUOROGRAPHY);
 
         // Получаем активные бронирования
         Flux<ActiveEventDto> activeBookingsFlux = Flux.concat(
@@ -70,20 +73,38 @@ public class AgregationServiceImpl implements AgregationService {
                 bookingsClient.getAllByStatus(BookingStatus.IN_PROGRESS, userId)
         );
 
-        // Комбинируем все данные
-        return Mono.zip(userInfoMono, balanceMono, pediculosisMono, fluorographyMono, activeBookingsFlux.collectList())
-                .map(tuple -> UserMapper.mapToUserResponseDto(
-                        tuple.getT1(), // UserResponseWithRoleDto
-                        tuple.getT2(), // Balance
-                        tuple.getT3(), // Pediculosis
-                        tuple.getT4(), // Fluorography
-                        tuple.getT5()  // List<ActiveEventDto>
+        Flux<ActiveEventDtoResponse> activeEventDtoResponseFlux = activeBookingsFlux
+                .map(activeEventDto -> new ActiveEventDtoResponse(
+                        activeEventDto.id(),
+                        activeEventDto.startTime(),
+                        activeEventDto.endTime(),
+                        activeEventDto.status(),
+                        activeEventDto.type(),
+                        (activeEventDto.type().equals("GYM")
+                                || activeEventDto.type().equals("HALL")
+                                || activeEventDto.type().equals("INTERNET"))
+                                && activeEventDto.status() == BookingStatus.BOOKED
                 ));
+
+        // Комбинируем все данные
+        return Mono.zip(
+                userInfoMono,
+                balanceMono,
+                pediculosisMono,
+                fluorographyMono,
+                activeEventDtoResponseFlux.collectList()
+        ).map(tuple -> UserMapper.mapToUserResponseDto(
+                tuple.getT1(), // UserResponseWithRoleDto
+                tuple.getT2(), // Balance
+                tuple.getT3(), // Pediculosis
+                tuple.getT4(), // Fluorography
+                tuple.getT5()  // List<ActiveEventDto>
+        ));
     }
 
 
     @Override
-    public Flux<List<AdminResponseDto>> getAllUsers(Authentication authentication) {
+    public Flux<AdminResponseDto> getAllUsers(Authentication authentication) {
 
         // Получаем данные всех пользователей
         Flux<UserResponseDto> usersFlux = userClient.getAllUsers();
@@ -93,7 +114,7 @@ public class AgregationServiceImpl implements AgregationService {
         return Flux.zip(usersFlux.collectMap(UserResponseDto::id, user -> user),
                         balancesFlux.collectMap(BalanceResponseDto::user, balance -> balance),
                         certificatesFlux.collectList())
-                .map(tuple -> {
+                .flatMap(tuple -> {
                     Map<UUID, UserResponseDto> usersMap = tuple.getT1();
                     Map<UUID, BalanceResponseDto> balancesMap = tuple.getT2();
                     List<CertificateDto> certificates = tuple.getT3();
@@ -156,8 +177,11 @@ public class AgregationServiceImpl implements AgregationService {
                         }
                     }
 
-                    return new ArrayList<>(adminResponseDtoMap.values());
+                    // Преобразуем значения карты в Flux
+                    return Mono.just(adminResponseDtoMap.values()).flatMapMany(Flux::fromIterable);
                 });
     }
+
+
 
 }
