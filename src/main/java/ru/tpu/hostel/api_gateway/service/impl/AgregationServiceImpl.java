@@ -106,7 +106,6 @@ public class AgregationServiceImpl implements AgregationService {
     @Override
     public Flux<AdminResponseDto> getAllUsers(Authentication authentication) {
 
-        // Получаем данные всех пользователей
         Flux<UserResponseDto> usersFlux = userClient.getAllUsers();
         Flux<BalanceResponseDto> balancesFlux = administrationClient.getAllBalances();
         Flux<CertificateDto> certificatesFlux = administrationClient.getAllDocuments();
@@ -119,7 +118,6 @@ public class AgregationServiceImpl implements AgregationService {
                     Map<UUID, BalanceResponseDto> balancesMap = tuple.getT2();
                     List<CertificateDto> certificates = tuple.getT3();
 
-                    // Создаём результирующую карту
                     Map<UUID, AdminResponseDto> adminResponseDtoMap = new HashMap<>();
                     usersMap.forEach((id, user) -> adminResponseDtoMap.put(id, new AdminResponseDto(
                             user.id(),
@@ -130,7 +128,6 @@ public class AgregationServiceImpl implements AgregationService {
                             null, null, null
                     )));
 
-                    // Добавляем балансы
                     balancesMap.forEach((id, balance) -> {
                         AdminResponseDto userData = adminResponseDtoMap.get(id);
                         if (userData != null) {
@@ -147,7 +144,6 @@ public class AgregationServiceImpl implements AgregationService {
                         }
                     });
 
-                    // Добавляем документы
                     for (CertificateDto certificate : certificates) {
                         AdminResponseDto userWithBalanceData = adminResponseDtoMap.get(certificate.user());
                         if (userWithBalanceData != null) {
@@ -177,7 +173,6 @@ public class AgregationServiceImpl implements AgregationService {
                         }
                     }
 
-                    // Преобразуем значения карты в Flux
                     return Mono.just(adminResponseDtoMap.values()).flatMapMany(Flux::fromIterable);
                 });
     }
