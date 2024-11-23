@@ -1,17 +1,12 @@
 package ru.tpu.hostel.api_gateway.client;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventDto;
 import ru.tpu.hostel.api_gateway.enums.BookingStatus;
 
-import java.util.List;
 import java.util.UUID;
 
 @Component

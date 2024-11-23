@@ -1,5 +1,17 @@
 version: '3.9'
 services:
+  postgres:
+    container_name: hostelDB
+    image: postgres:15
+    hostname: hostelDB
+    environment:
+      - POSTGRES_DB=hostelService
+      - POSTGRES_USER=hostel
+      - POSTGRES_PASSWORD=ilia
+    ports:
+      - "5430:5432"
+    networks:
+      - shared-network
   api-gateway:
     container_name: api-gateway
     build:
@@ -8,6 +20,8 @@ services:
     hostname: api-gateway
     ports:
       - "8080:8080"
+    depends_on:
+      - postgres
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 10s
