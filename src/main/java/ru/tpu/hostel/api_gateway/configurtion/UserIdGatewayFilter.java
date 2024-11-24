@@ -27,7 +27,8 @@ public class UserIdGatewayFilter implements GlobalFilter, Ordered {
             "users/get/all",
             "bookings/available/timeline",
             "bookings/available/timeslot",
-            "balance"
+            "balance",
+            "role"
     );
 
     @Override
