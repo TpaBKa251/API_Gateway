@@ -6,11 +6,23 @@ import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.dto.AdminResponseDto;
 import ru.tpu.hostel.api_gateway.dto.WholeUserResponseDto;
 
-import java.util.List;
-
 public interface AgregationService {
 
     Mono<WholeUserResponseDto> getWholeUser(Authentication authentication);
 
-    Flux<AdminResponseDto> getAllUsers(Authentication authentication);
+    Flux<AdminResponseDto> getAllUsers(
+            Authentication authentication,
+            String page,
+            String size,
+            String firstName,
+            String lastName,
+            String middleName,
+            String room,
+            String negative,
+            String value,
+            String fluraPast,
+            String fluraDate,
+            String certPast,
+            String certDate
+    );
 }

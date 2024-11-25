@@ -1,6 +1,7 @@
 package ru.tpu.hostel.api_gateway.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.security.core.Authentication;
@@ -16,8 +17,8 @@ import ru.tpu.hostel.api_gateway.dto.AdminResponseDto;
 import ru.tpu.hostel.api_gateway.dto.BalanceResponseDto;
 import ru.tpu.hostel.api_gateway.dto.CertificateDto;
 import ru.tpu.hostel.api_gateway.dto.UserResponseDto;
-import ru.tpu.hostel.api_gateway.dto.WholeUserResponseDto;
 import ru.tpu.hostel.api_gateway.dto.UserResponseWithRoleDto;
+import ru.tpu.hostel.api_gateway.dto.WholeUserResponseDto;
 import ru.tpu.hostel.api_gateway.enums.BookingStatus;
 import ru.tpu.hostel.api_gateway.enums.DocumentType;
 import ru.tpu.hostel.api_gateway.filter.JwtAuthenticationFilter;
@@ -25,12 +26,11 @@ import ru.tpu.hostel.api_gateway.mapper.UserMapper;
 import ru.tpu.hostel.api_gateway.service.AgregationService;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AgregationServiceImpl implements AgregationService {
@@ -104,79 +104,132 @@ public class AgregationServiceImpl implements AgregationService {
 
 
     @Override
-    public Flux<AdminResponseDto> getAllUsers(Authentication authentication) {
+    public Flux<AdminResponseDto> getAllUsers(
+            Authentication authentication,
+            String page,
+            String size,
+            String firstName,
+            String lastName,
+            String middleName,
+            String room,
+            String negative,
+            String value,
+            String fluraPast,
+            String fluraDate,
+            String certPast,
+            String certDate
+    ) {
 
-        Flux<UserResponseDto> usersFlux = userClient.getAllUsers();
-        Flux<BalanceResponseDto> balancesFlux = administrationClient.getAllBalances();
-        Flux<CertificateDto> certificatesFlux = administrationClient.getAllDocuments();
+        Flux<UserResponseDto> usersFlux;
+        Flux<BalanceResponseDto> balancesFlux;
+        Flux<CertificateDto> certificatesFlux;
 
-        return Flux.zip(usersFlux.collectMap(UserResponseDto::id, user -> user),
-                        balancesFlux.collectMap(BalanceResponseDto::user, balance -> balance),
-                        certificatesFlux.collectList())
-                .flatMap(tuple -> {
-                    Map<UUID, UserResponseDto> usersMap = tuple.getT1();
-                    Map<UUID, BalanceResponseDto> balancesMap = tuple.getT2();
-                    List<CertificateDto> certificates = tuple.getT3();
+        // Фильтр по юзерам
+        if (!firstName.isEmpty() || !lastName.isEmpty() || !middleName.isEmpty() || !room.isEmpty()) {
+            usersFlux = userClient.getAllUsers(
+                    Integer.parseInt(page),
+                    Integer.parseInt(size),
+                    firstName,
+                    lastName,
+                    middleName,
+                    room
+            );
 
-                    Map<UUID, AdminResponseDto> adminResponseDtoMap = new HashMap<>();
-                    usersMap.forEach((id, user) -> adminResponseDtoMap.put(id, new AdminResponseDto(
-                            user.id(),
-                            user.firstName(),
-                            user.lastName(),
-                            user.middleName(),
-                            user.roomNumber(),
-                            null, null, null
-                    )));
+            Mono<List<UUID>> userIdsMono = usersFlux
+                    .map(UserResponseDto::id)
+                    .collectList();
 
-                    balancesMap.forEach((id, balance) -> {
-                        AdminResponseDto userData = adminResponseDtoMap.get(id);
-                        if (userData != null) {
-                            adminResponseDtoMap.put(id, new AdminResponseDto(
-                                    userData.id(),
-                                    userData.firstName(),
-                                    userData.lastName(),
-                                    userData.middleName(),
-                                    userData.room(),
-                                    userData.pediculosis(),
-                                    userData.fluorography(),
-                                    balance.balance()
-                            ));
-                        }
-                    });
+            balancesFlux = userIdsMono.flatMapMany(administrationClient::getAllBalancesByUsers);
+            certificatesFlux = userIdsMono.flatMapMany(administrationClient::getAllDocumentsByUsers);
+        } else if (negative != null && !negative.isEmpty()) { // Фильтр по балансу
+            balancesFlux = administrationClient.getAllBalances(
+                    Integer.parseInt(page),
+                    Integer.parseInt(size),
+                    Boolean.parseBoolean(negative),
+                    new BigDecimal(value)
+            );
 
-                    for (CertificateDto certificate : certificates) {
-                        AdminResponseDto userWithBalanceData = adminResponseDtoMap.get(certificate.user());
-                        if (userWithBalanceData != null) {
-                            if (certificate.type() == DocumentType.CERTIFICATE) {
-                                adminResponseDtoMap.put(certificate.user(), new AdminResponseDto(
-                                        userWithBalanceData.id(),
-                                        userWithBalanceData.firstName(),
-                                        userWithBalanceData.lastName(),
-                                        userWithBalanceData.middleName(),
-                                        userWithBalanceData.room(),
-                                        certificate,
-                                        userWithBalanceData.fluorography(),
-                                        userWithBalanceData.balance()
-                                ));
-                            } else {
-                                adminResponseDtoMap.put(certificate.user(), new AdminResponseDto(
-                                        userWithBalanceData.id(),
-                                        userWithBalanceData.firstName(),
-                                        userWithBalanceData.lastName(),
-                                        userWithBalanceData.middleName(),
-                                        userWithBalanceData.room(),
-                                        userWithBalanceData.pediculosis(),
-                                        certificate,
-                                        userWithBalanceData.balance()
-                                ));
-                            }
-                        }
-                    }
+            Mono<List<UUID>> userIdsMono = balancesFlux
+                    .map(BalanceResponseDto::user)
+                    .collectList();
 
-                    return Mono.just(adminResponseDtoMap.values()).flatMapMany(Flux::fromIterable);
-                });
+            usersFlux = userIdsMono.flatMapMany(userClient::getAllUsersWithIds);
+            certificatesFlux = userIdsMono.flatMapMany(administrationClient::getAllDocumentsByUsers);
+        } else if (fluraPast != null && fluraDate != null || certPast != null && certDate != null) { // Имба фильр по спракам
+            certificatesFlux = administrationClient.getAllDocuments(
+                    Integer.parseInt(page),
+                    Integer.parseInt(size),
+                    fluraPast == null ? null : Boolean.parseBoolean(fluraPast),
+                    fluraDate == null ? null : LocalDate.parse(fluraDate),
+                    certPast == null ? null : Boolean.parseBoolean(certPast),
+                    certDate == null ? null : LocalDate.parse(certDate)
+            );
+
+            Mono<List<UUID>> userIdsMono = certificatesFlux
+                    .map(CertificateDto::user)
+                    .collectList();
+
+            usersFlux = userIdsMono.flatMapMany(userClient::getAllUsersWithIds);
+            balancesFlux = userIdsMono.flatMapMany(administrationClient::getAllBalancesByUsers);
+        } else { // Классика без фильтров
+            usersFlux = userClient.getAllUsers(
+                    Integer.parseInt(page),
+                    Integer.parseInt(size),
+                    "",
+                    "",
+                    "",
+                    ""
+            );
+
+            balancesFlux = administrationClient.getAllBalances(
+                    Integer.parseInt(page),
+                    Integer.parseInt(size),
+                    null,
+                    null
+            );
+
+            certificatesFlux = administrationClient.getAllDocuments(
+                    Integer.parseInt(page),
+                    Integer.parseInt(size),
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        return Flux.zip(
+                usersFlux,
+                balancesFlux,
+                certificatesFlux.buffer(2)
+        ).map(tuple -> {
+            UserResponseDto user = tuple.getT1();
+            BalanceResponseDto balance = tuple.getT2();
+            List<CertificateDto> documents = tuple.getT3();
+
+            CertificateDto pediculosis = documents.stream()
+                    .filter(doc -> doc.type() == DocumentType.CERTIFICATE)
+                    .findFirst()
+                    .orElse(null);
+
+            CertificateDto fluorography = documents.stream()
+                    .filter(doc -> doc.type() == DocumentType.FLUOROGRAPHY)
+                    .findFirst()
+                    .orElse(null);
+
+            return new AdminResponseDto(
+                    user.id(),
+                    user.firstName(),
+                    user.lastName(),
+                    user.middleName(),
+                    user.roomNumber(),
+                    pediculosis,
+                    fluorography,
+                    balance.balance()
+            );
+        });
+
     }
-
 
 
 }

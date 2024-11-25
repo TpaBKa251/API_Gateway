@@ -28,7 +28,7 @@ public class UserIdGatewayFilter implements GlobalFilter, Ordered {
             "bookings/available/timeline",
             "bookings/available/timeslot",
             "balance",
-            "role"
+            "roles"
     );
 
     @Override
@@ -39,29 +39,24 @@ public class UserIdGatewayFilter implements GlobalFilter, Ordered {
         }
 
         return exchange.getPrincipal()
-                .cast(Authentication.class) // Получаем аутентификацию
-                .map(jwtAuthenticationFilter::getUserIdFromToken) // Извлекаем userId
+                .cast(Authentication.class)
+                .map(jwtAuthenticationFilter::getUserIdFromToken)
                 .flatMap(userId -> {
-                    // Модифицируем URL, добавляя новый PathVariable
                     String newPath = exchange.getRequest().getURI().getPath() + "/" + userId;
 
-                    // Создаем новый запрос с измененным URL
                     URI newUri = URI.create(exchange.getRequest().getURI().toString().replace(exchange.getRequest().getURI().getPath(), newPath));
 
-                    // Создаем новый запрос с измененным URI
                     ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
-                            .uri(newUri) // Заменяем URI
+                            .uri(newUri)
                             .build();
 
-                    // Создаем новый обмен с измененным запросом
                     ServerWebExchange modifiedExchange = exchange.mutate()
-                            .request(modifiedRequest) // Устанавливаем новый запрос
+                            .request(modifiedRequest)
                             .build();
 
-                    // Передаем новый обмен в цепочку фильтров
                     return chain.filter(modifiedExchange);
                 })
-                .switchIfEmpty(chain.filter(exchange)); // Если нет аутентификации, продолжаем без изменений
+                .switchIfEmpty(chain.filter(exchange));
     }
 
     private boolean shouldModifyRequest(String request) {
@@ -77,7 +72,7 @@ public class UserIdGatewayFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -1; // Устанавливаем приоритет фильтра
+        return -1;
     }
 }
 
