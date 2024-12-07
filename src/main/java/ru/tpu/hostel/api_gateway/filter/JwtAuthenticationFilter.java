@@ -24,7 +24,6 @@ import ru.tpu.hostel.api_gateway.exception.ServiceUnavailableException;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AccessDeniedException;
 import java.security.Key;
 import java.util.List;
 import java.util.UUID;

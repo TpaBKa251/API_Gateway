@@ -28,6 +28,7 @@ public class UserIdGatewayFilter implements GlobalFilter, Ordered {
             "bookings/available/timeline",
             "bookings/available/timeslot",
             "balance",
+            "documents/edit",
             "roles"
     );
 

@@ -80,9 +80,9 @@ public class AgregationServiceImpl implements AgregationService {
                         activeEventDto.endTime(),
                         activeEventDto.status(),
                         activeEventDto.type(),
-                        (activeEventDto.type().equals("GYM")
-                                || activeEventDto.type().equals("HALL")
-                                || activeEventDto.type().equals("INTERNET"))
+                        (activeEventDto.type().equals("Тренажерный зал")
+                                || activeEventDto.type().equals("Зал")
+                                || activeEventDto.type().equals("Интернет"))
                                 && activeEventDto.status() == BookingStatus.BOOKED
                 ));
 
