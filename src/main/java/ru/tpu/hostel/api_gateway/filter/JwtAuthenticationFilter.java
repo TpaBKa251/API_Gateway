@@ -1,5 +1,7 @@
 package ru.tpu.hostel.api_gateway.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.shaded.gson.JsonObject;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -7,6 +9,8 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,6 +24,7 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
+import ru.tpu.hostel.api_gateway.enums.Roles;
 import ru.tpu.hostel.api_gateway.exception.ServiceUnavailableException;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -129,6 +134,17 @@ public class JwtAuthenticationFilter implements WebFilter {
                 .parseClaimsJws(token)
                 .getBody();
         return UUID.fromString(claims.get("userId", String.class));
+    }
+
+    public String getRolesFromToken(Authentication authentication) {
+        return authentication.getAuthorities()
+                .stream()
+                .map(role -> {
+                    String roleStr = role.toString();
+                    roleStr = roleStr.replace("ROLE_", "");
+                    return roleStr;
+                })
+                .collect(Collectors.joining(","));
     }
 
     private Key getSigningKey() {
