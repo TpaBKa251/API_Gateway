@@ -15,7 +15,7 @@ spring:
         - id: userservice
           uri: http://userservice:8080
           predicates:
-            - Path=/users/**, /sessions/**, /roles/**  # Объединяем пути в один предикат
+            - Path=/users/**, /sessions/**, /roles/**
         - id: bookingsservice
           uri: http://bookingservice:8080
           predicates:
