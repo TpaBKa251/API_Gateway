@@ -15,7 +15,8 @@ public class AgregationRouter {
     @Bean
     public RouterFunction<ServerResponse> agregationRoutes(AgregationController handler) {
         return route(GET("/api/get/whole/user"), handler::getWholeUser)
-                .andRoute(POST("/api/get/all/users"), handler::getAllUsers);
+                .andRoute(POST("/api/get/all/users"), handler::getAllUsers)
+                .andRoute(GET("api/bookings/get/all"), handler::getAllBookingsWithUsers);
     }
 }
 

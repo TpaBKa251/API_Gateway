@@ -5,6 +5,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.service.AgregationService;
 
@@ -63,6 +64,11 @@ public class AgregationController {
                             .flatMap(users -> ServerResponse.ok().bodyValue(users));
                 })
                 .switchIfEmpty(ServerResponse.status(401).build()); // Ответ, если Principal отсутствует
+    }
+
+    public Mono<ServerResponse> getAllBookingsWithUsers(ServerRequest request) {
+        // TODO логика получения броней с юзерами. Нужно добавить новую ДТО
+        return null;
     }
 }
 
