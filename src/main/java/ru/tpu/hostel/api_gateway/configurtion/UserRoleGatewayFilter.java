@@ -40,7 +40,8 @@ public class UserRoleGatewayFilter implements GlobalFilter, Ordered {
                 .map(jwtAuthenticationFilter::getRolesFromToken)
                 .flatMap(role ->{
                     String newPath = exchange.getRequest().getURI().getPath() + "/" + role;
-                    URI newUri = URI.create(exchange.getRequest().getURI().toString().replace(exchange.getRequest().getURI().getPath(), newPath));
+                    URI newUri = URI.create(exchange.getRequest().getURI().toString()
+                            .replace(exchange.getRequest().getURI().getPath(), newPath));
 
                     ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                             .uri(newUri)

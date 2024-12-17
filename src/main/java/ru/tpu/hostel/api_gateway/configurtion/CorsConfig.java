@@ -16,26 +16,26 @@ public class CorsConfig implements WebFluxConfigurer {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowCredentials(true); // Разрешает отправку куки
-        corsConfig.addAllowedHeader("*");    // Разрешает все заголовки
-        corsConfig.addAllowedMethod("*");    // Разрешает все HTTP-методы
-        corsConfig.setAllowedOriginPatterns(List.of("*")); // Динамическое определение источников
-        corsConfig.addExposedHeader("Authorization"); // Кастомные заголовки для ответа
+        corsConfig.setAllowCredentials(true);
+        corsConfig.addAllowedHeader("*");
+        corsConfig.addAllowedMethod("*");
+        corsConfig.setAllowedOriginPatterns(List.of("*"));
+        corsConfig.addExposedHeader("Authorization");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);
 
-        return new CorsWebFilter(source); // Используем CorsWebFilter для WebFlux
+        return new CorsWebFilter(source);
     }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowCredentials(true) // Разрешает отправку куки
-                .allowedHeaders("*")    // Разрешает все заголовки
-                .allowedMethods("*")    // Разрешает все HTTP-методы
-                .allowedOriginPatterns("*") // Динамическое определение источников
-                .exposedHeaders("Authorization"); // Кастомные заголовки для ответа
+                .allowCredentials(true)
+                .allowedHeaders("*")
+                .allowedMethods("*")
+                .allowedOriginPatterns("*")
+                .exposedHeaders("Authorization");
     }
 }
 

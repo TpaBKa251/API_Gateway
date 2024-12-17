@@ -5,7 +5,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.service.AgregationService;
 
@@ -15,21 +14,19 @@ public class AgregationController {
 
     private final AgregationService agregationService;
 
-    // Обработчик для получения одного пользователя
     public Mono<ServerResponse> getWholeUser(ServerRequest request) {
         return request.principal()
-                .cast(Authentication.class) // Приведение Principal к Authentication
+                .cast(Authentication.class)
                 .flatMap(authentication ->
-                        agregationService.getWholeUser(authentication) // Получение данных из сервиса
-                                .flatMap(response -> ServerResponse.ok().bodyValue(response)) // Формирование успешного ответа
+                        agregationService.getWholeUser(authentication)
+                                .flatMap(response -> ServerResponse.ok().bodyValue(response))
                 )
-                .switchIfEmpty(ServerResponse.status(401).build()); // Ответ, если Principal отсутствует
+                .switchIfEmpty(ServerResponse.status(401).build());
     }
 
-    // Обработчик для получения списка пользователей
     public Mono<ServerResponse> getAllUsers(ServerRequest request) {
         return request.principal()
-                .cast(Authentication.class) // Приведение Principal к Authentication
+                .cast(Authentication.class)
                 .flatMap(authentication -> {
 
                     String page = request.queryParam("page").orElse("0");
@@ -59,11 +56,11 @@ public class AgregationController {
                                     fluraDate,
                                     certPast,
                                     certDate
-                            ) // Получение данных из сервиса
-                            .collectList() // Преобразование Flux в List
+                            )
+                            .collectList()
                             .flatMap(users -> ServerResponse.ok().bodyValue(users));
                 })
-                .switchIfEmpty(ServerResponse.status(401).build()); // Ответ, если Principal отсутствует
+                .switchIfEmpty(ServerResponse.status(401).build());
     }
 
     public Mono<ServerResponse> getAllBookingsWithUsers(ServerRequest request) {

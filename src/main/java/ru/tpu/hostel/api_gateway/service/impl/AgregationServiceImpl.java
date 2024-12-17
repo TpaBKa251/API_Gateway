@@ -45,10 +45,8 @@ public class AgregationServiceImpl implements AgregationService {
 
         UUID userId = jwtAuthenticationFilter.getUserIdFromToken(authentication);
 
-        // Получаем данные пользователя
         Mono<UserResponseWithRoleDto> userInfoMono = userClient.getUserWithRoles(userId);
 
-        // Получаем баланс
         Mono<BigDecimal> balanceMono = administrationClient.getBalanceShort(userId)
                 .flatMap(response -> {
                     String jsonBody = response.toString().substring(
@@ -61,13 +59,11 @@ public class AgregationServiceImpl implements AgregationService {
                     }
                 });
 
-        // Получаем документы
         Mono<CertificateDto> pediculosisMono = administrationClient
                 .getDocumentByType(userId, DocumentType.CERTIFICATE);
         Mono<CertificateDto> fluorographyMono = administrationClient
                 .getDocumentByType(userId, DocumentType.FLUOROGRAPHY);
 
-        // Получаем активные бронирования
         Flux<ActiveEventDto> activeBookingsFlux = Flux.concat(
                 bookingsClient.getAllByStatus(BookingStatus.BOOKED, userId),
                 bookingsClient.getAllByStatus(BookingStatus.IN_PROGRESS, userId)
@@ -86,7 +82,6 @@ public class AgregationServiceImpl implements AgregationService {
                                 && activeEventDto.status() == BookingStatus.BOOKED
                 ));
 
-        // Комбинируем все данные
         return Mono.zip(
                 userInfoMono,
                 balanceMono,
@@ -94,11 +89,11 @@ public class AgregationServiceImpl implements AgregationService {
                 fluorographyMono,
                 activeEventDtoResponseFlux.collectList()
         ).map(tuple -> UserMapper.mapToUserResponseDto(
-                tuple.getT1(), // UserResponseWithRoleDto
-                tuple.getT2(), // Balance
-                tuple.getT3(), // Pediculosis
-                tuple.getT4(), // Fluorography
-                tuple.getT5()  // List<ActiveEventDto>
+                tuple.getT1(),
+                tuple.getT2(),
+                tuple.getT3(),
+                tuple.getT4(),
+                tuple.getT5()
         ));
     }
 

@@ -26,8 +26,8 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-                .csrf(ServerHttpSecurity.CsrfSpec::disable) // Отключение CSRF
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Подключаем CORS из существующей конфигурации
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(auth -> auth
                         .pathMatchers(HttpMethod.POST, "/api/get/all/users").hasRole("ADMINISTRATION")
                         //.pathMatchers(HttpMethod.GET, "/api/get/all/users").hasRole("ADMINISTRATION")
@@ -43,21 +43,20 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/users").permitAll()
                         .pathMatchers(HttpMethod.POST, "/sessions").permitAll()
                         .pathMatchers(HttpMethod.GET, "/sessions/auth/token").permitAll()
-                        .anyExchange().authenticated() // Для всех остальных маршрутов требуется аутентификация
+                        .anyExchange().authenticated()
                 )
-                .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION) // Подключение JWT-фильтра
-                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance()) // Отключение сохранения контекста
+                .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
                 .build();
     }
 
-    // Метод для получения CORS-конфигурации
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowCredentials(true); // Разрешение отправки куки
-        corsConfig.addAllowedHeader("*");    // Разрешение всех заголовков
-        corsConfig.addAllowedMethod("*");    // Разрешение всех методов
-        corsConfig.setAllowedOriginPatterns(List.of("*")); // Разрешение всех источников
-        corsConfig.addExposedHeader("Authorization"); // Кастомные заголовки для ответа
+        corsConfig.setAllowCredentials(true);
+        corsConfig.addAllowedHeader("*");
+        corsConfig.addAllowedMethod("*");
+        corsConfig.setAllowedOriginPatterns(List.of("*"));
+        corsConfig.addExposedHeader("Authorization");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfig);

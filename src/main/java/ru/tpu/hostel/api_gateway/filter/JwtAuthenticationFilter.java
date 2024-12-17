@@ -47,25 +47,23 @@ public class JwtAuthenticationFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String endpoint = exchange.getRequest().getURI().getPath();
 
-        // Разрешенные эндпоинты пропускаем без проверки
         if (PERMITTED_ENDPOINTS.contains(endpoint)) {
             return chain.filter(exchange);
         }
 
-        // Извлечение токена
         String token = extractToken(exchange.getRequest().getHeaders());
 
         if (token == null || !validateToken(token)) {
             throw new ServiceUnavailableException("Вы не авторизованы");
         }
 
-        // Извлечение Claims и установка SecurityContext
         Claims claims = getClaimsFromToken(token);
 
         return Mono.justOrEmpty(createAuthentication(claims))
                 .flatMap(authentication -> {
                     SecurityContext context = new SecurityContextImpl(authentication);
-                    return chain.filter(exchange).contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)));
+                    return chain.filter(exchange)
+                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)));
                 });
     }
 

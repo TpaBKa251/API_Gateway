@@ -49,7 +49,8 @@ public class UserIdGatewayFilter implements GlobalFilter, Ordered {
                 .flatMap(userId -> {
                     String newPath = exchange.getRequest().getURI().getPath() + "/" + userId;
 
-                    URI newUri = URI.create(exchange.getRequest().getURI().toString().replace(exchange.getRequest().getURI().getPath(), newPath));
+                    URI newUri = URI.create(exchange.getRequest().getURI().toString()
+                            .replace(exchange.getRequest().getURI().getPath(), newPath));
 
                     ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                             .uri(newUri)
