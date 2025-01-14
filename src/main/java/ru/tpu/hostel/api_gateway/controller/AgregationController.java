@@ -64,8 +64,15 @@ public class AgregationController {
     }
 
     public Mono<ServerResponse> getAllBookingsWithUsers(ServerRequest request) {
-        // TODO логика получения броней с юзерами. Нужно добавить новую ДТО
-        return null;
+        String bookingType = request.pathVariable("type");
+        String date = request.pathVariable("date");
+
+        return request.principal()
+                .cast(Authentication.class)
+                .flatMap(authentication -> agregationService.getAllBookings(bookingType, date)
+                        .collectList()
+                        .flatMap(list -> ServerResponse.ok().bodyValue(list)))
+                .switchIfEmpty(ServerResponse.status(401).build());
     }
 }
 

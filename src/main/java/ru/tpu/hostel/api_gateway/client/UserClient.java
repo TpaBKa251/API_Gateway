@@ -7,6 +7,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.dto.UserResponseDto;
 import ru.tpu.hostel.api_gateway.dto.UserResponseWithRoleDto;
+import ru.tpu.hostel.api_gateway.dto.UserShortResponseDto2;
 
 import java.util.List;
 import java.util.UUID;
@@ -60,5 +61,14 @@ public class UserClient {
                 .bodyToFlux(UserResponseDto.class);
     }
 
+    public Flux<UserShortResponseDto2> getAllUsersWithIdsShort(List<UUID> ids) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("users/get/all/by/ids/short")
+                        .queryParam("ids", ids.toArray())
+                        .build())
+                .retrieve()
+                .bodyToFlux(UserShortResponseDto2.class);
+    }
 }
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -12,6 +13,7 @@ import org.springframework.security.web.server.context.NoOpServerSecurityContext
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.filter.JwtAuthenticationFilter;
 
 import java.util.List;
@@ -40,6 +42,30 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.PATCH, "/documents/edit").hasRole("ADMINISTRATION")
                         .pathMatchers(HttpMethod.GET, "/documents/get/all").hasRole("ADMINISTRATION")
                         .pathMatchers(HttpMethod.GET, "/users/get/all").hasRole("ADMINISTRATION")
+                        .pathMatchers(HttpMethod.GET, "api/bookings/get/all/{type}/{date}").access((authentication, context) -> {
+                            String bookingType = context.getVariables().get("type").toString();
+
+                            List<String> roles;
+                            switch (bookingType.toUpperCase()) {
+                                case "GYM" -> roles =
+                                        List.of("ROLE_ADMINISTRATION", "ROLE_HOSTEL_SUPERVISOR", "ROLE_RESPONSIBLE_GYM");
+                                case "HALL" -> roles =
+                                        List.of("ROLE_ADMINISTRATION", "ROLE_HOSTEL_SUPERVISOR", "ROLE_RESPONSIBLE_HALL");
+                                case "INTERNET" -> roles =
+                                        List.of("ROLE_ADMINISTRATION", "ROLE_HOSTEL_SUPERVISOR", "ROLE_RESPONSIBLE_INTERNET");
+                                case "ALL" -> roles = List.of("ROLE_ADMINISTRATION", "ROLE_HOSTEL_SUPERVISOR");
+                                default -> {
+                                    return Mono.just(new AuthorizationDecision(false));
+                                }
+                            }
+
+                            return authentication
+                                    .map(auth1 -> auth1.isAuthenticated() &&
+                                            auth1.getAuthorities().stream()
+                                                    .anyMatch(grantedAuthority ->
+                                                            roles.contains(grantedAuthority.getAuthority())))
+                                    .map(AuthorizationDecision::new);
+                        })
                         .pathMatchers(HttpMethod.POST, "/users").permitAll()
                         .pathMatchers(HttpMethod.POST, "/sessions").permitAll()
                         .pathMatchers(HttpMethod.GET, "/sessions/auth/token").permitAll()

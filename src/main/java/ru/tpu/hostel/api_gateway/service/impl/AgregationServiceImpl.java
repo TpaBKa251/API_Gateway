@@ -13,11 +13,15 @@ import ru.tpu.hostel.api_gateway.client.BookingsClient;
 import ru.tpu.hostel.api_gateway.client.UserClient;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventDto;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventDtoResponse;
+import ru.tpu.hostel.api_gateway.dto.ActiveEventWithUserDto;
 import ru.tpu.hostel.api_gateway.dto.AdminResponseDto;
 import ru.tpu.hostel.api_gateway.dto.BalanceResponseDto;
+import ru.tpu.hostel.api_gateway.dto.BookingResponseWithUsersDto;
 import ru.tpu.hostel.api_gateway.dto.CertificateDto;
 import ru.tpu.hostel.api_gateway.dto.UserResponseDto;
 import ru.tpu.hostel.api_gateway.dto.UserResponseWithRoleDto;
+import ru.tpu.hostel.api_gateway.dto.UserShortResponseDto2;
+import ru.tpu.hostel.api_gateway.dto.UserShortResponseWithBookingIdDto;
 import ru.tpu.hostel.api_gateway.dto.WholeUserResponseDto;
 import ru.tpu.hostel.api_gateway.enums.BookingStatus;
 import ru.tpu.hostel.api_gateway.enums.DocumentType;
@@ -29,6 +33,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -225,4 +230,50 @@ public class AgregationServiceImpl implements AgregationService {
         });
 
     }
+
+    @Override
+    public Flux<BookingResponseWithUsersDto> getAllBookings(String type, String localDate) {
+        Flux<ActiveEventWithUserDto> bookings = type.equals("ALL")
+                ? bookingsClient.getAllByDate(localDate)
+                : bookingsClient.getAllByTypeAndDate(type, localDate);
+
+        return bookings
+                .groupBy(booking -> booking.startTime() + "-" + booking.endTime())
+                .flatMap(groupedBookings -> groupedBookings.collectList()
+                        .flatMapMany(bookingsList -> {
+                            List<UUID> userIds = bookingsList.stream()
+                                    .map(ActiveEventWithUserDto::userId)
+                                    .toList();
+
+                            return userClient.getAllUsersWithIdsShort(userIds)
+                                    .collectList()
+                                    .map(users -> {
+                                        List<UserShortResponseWithBookingIdDto> usersWithBookingIds = users.stream()
+                                                .map(user -> {
+                                                    UUID bookingId = bookingsList.stream()
+                                                            .filter(booking -> booking.userId().equals(user.id()))
+                                                            .findFirst()
+                                                            .map(ActiveEventWithUserDto::id)
+                                                            .orElse(null);
+
+                                                    return new UserShortResponseWithBookingIdDto(
+                                                            user.firstName(),
+                                                            user.lastName(),
+                                                            user.middleName(),
+                                                            bookingId
+                                                    );
+                                                })
+                                                .collect(Collectors.toList());
+
+                                        return new BookingResponseWithUsersDto(
+                                                bookingsList.get(0).startTime(),
+                                                bookingsList.get(0).endTime(),
+                                                bookingsList.get(0).type(),
+                                                usersWithBookingIds
+                                        );
+                                    });
+                        })
+                );
+    }
+
 }
