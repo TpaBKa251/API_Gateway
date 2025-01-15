@@ -4,9 +4,9 @@ import org.springframework.security.core.Authentication;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.dto.AdminResponseDto;
+import ru.tpu.hostel.api_gateway.dto.AvailableTimeSlotsDto;
 import ru.tpu.hostel.api_gateway.dto.BookingResponseWithUsersDto;
 import ru.tpu.hostel.api_gateway.dto.WholeUserResponseDto;
-import ru.tpu.hostel.api_gateway.enums.BookingType;
 
 public interface AgregationService {
 
@@ -29,4 +29,6 @@ public interface AgregationService {
     );
 
     Flux<BookingResponseWithUsersDto> getAllBookings(String type, String LocalDate);
+
+    Mono<AvailableTimeSlotsDto> getAllAvailableTimeSlots(String type, String LocalDate, Authentication authentication);
 }

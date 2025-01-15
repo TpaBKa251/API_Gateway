@@ -15,7 +15,6 @@ import java.util.UUID;
 @Component
 public class UserClient {
 
-
     private final WebClient webClient;
 
     public UserClient(@Qualifier("userWebClient") WebClient webClient) {
@@ -69,6 +68,15 @@ public class UserClient {
                         .build())
                 .retrieve()
                 .bodyToFlux(UserShortResponseDto2.class);
+    }
+
+    public Mono<UserShortResponseDto2> getUserWithIdShort(UUID id) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("users/get/by/id/short/{id}")
+                        .build(id))
+                .retrieve()
+                .bodyToMono(UserShortResponseDto2.class);
     }
 }
 

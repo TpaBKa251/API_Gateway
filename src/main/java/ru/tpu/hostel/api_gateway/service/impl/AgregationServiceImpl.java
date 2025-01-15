@@ -15,6 +15,8 @@ import ru.tpu.hostel.api_gateway.dto.ActiveEventDto;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventDtoResponse;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventWithUserDto;
 import ru.tpu.hostel.api_gateway.dto.AdminResponseDto;
+import ru.tpu.hostel.api_gateway.dto.AvailableTimeSlotsDto;
+import ru.tpu.hostel.api_gateway.dto.AvailableTimeSlotsWithResponsible;
 import ru.tpu.hostel.api_gateway.dto.BalanceResponseDto;
 import ru.tpu.hostel.api_gateway.dto.BookingResponseWithUsersDto;
 import ru.tpu.hostel.api_gateway.dto.CertificateDto;
@@ -276,4 +278,22 @@ public class AgregationServiceImpl implements AgregationService {
                 );
     }
 
+    @Override
+    public Mono<AvailableTimeSlotsDto> getAllAvailableTimeSlots(String type, String localDate, Authentication authentication) {
+        Mono<AvailableTimeSlotsWithResponsible> availableTimeSlotsWithResponsible = bookingsClient
+                .getAvailableTimeSlots(localDate, type, jwtAuthenticationFilter.getUserIdFromToken(authentication));
+        Mono<UserShortResponseDto2> responsible = availableTimeSlotsWithResponsible.flatMap(
+                response -> userClient.getUserWithIdShort(response.responsibleId())
+        );
+
+        return Mono.zip(
+                responsible,
+                availableTimeSlotsWithResponsible
+        ).map(tuple -> new AvailableTimeSlotsDto(
+                tuple.getT1().firstName(),
+                tuple.getT1().lastName(),
+                tuple.getT1().middleName(),
+                tuple.getT2().timeSlots()
+        ));
+    }
 }

@@ -17,7 +17,8 @@ public class AgregationRouter {
     public RouterFunction<ServerResponse> agregationRoutes(AgregationController handler) {
         return route(GET("/api/get/whole/user"), handler::getWholeUser)
                 .andRoute(POST("/api/get/all/users"), handler::getAllUsers)
-                .andRoute(GET("/api/bookings/get/all/{type}/{date}"), handler::getAllBookingsWithUsers);
+                .andRoute(GET("/api/bookings/get/all/{type}/{date}"), handler::getAllBookingsWithUsers)
+                .andRoute(GET("/api/bookings/get/availbale/slots/{date}/{bookingType}"), handler::getAvailableTimeSlots);
     }
 }
 

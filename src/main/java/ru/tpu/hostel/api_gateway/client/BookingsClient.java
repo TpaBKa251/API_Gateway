@@ -4,8 +4,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventDto;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventWithUserDto;
+import ru.tpu.hostel.api_gateway.dto.AvailableTimeSlotsWithResponsible;
 import ru.tpu.hostel.api_gateway.enums.BookingStatus;
 import ru.tpu.hostel.api_gateway.enums.BookingType;
 
@@ -44,6 +46,15 @@ public class BookingsClient {
                         .build(date))
                 .retrieve()
                 .bodyToFlux(ActiveEventWithUserDto.class);
+    }
+
+    public Mono<AvailableTimeSlotsWithResponsible> getAvailableTimeSlots(String date, String bookingType, UUID userId) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("bookings/available/timeslot/{date}/{bookingType}/{userId}")
+                        .build(date, bookingType, userId))
+                .retrieve()
+                .bodyToMono(AvailableTimeSlotsWithResponsible.class);
     }
 }
 
