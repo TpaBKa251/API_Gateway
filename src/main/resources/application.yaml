@@ -19,11 +19,21 @@ spring:
         - id: bookingsservice
           uri: http://bookingservice:8080
           predicates:
-              - Path=/bookings/**
+            - Path=/bookings/**, /responsibles/**
         - id: administrationservice
           uri: http://administrationservice:8080
           predicates:
             - Path=/balance/**, /documents/**
+        - id: schedulesservice
+          uri: http://schedulesservice:8080
+          predicates:
+            - Path=/schedules/**
+        - id: notificationservice
+          uri: http://notificationservice:8080
+          predicates:
+            - Path=/notifications/**
+
+
 
 
 

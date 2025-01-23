@@ -17,7 +17,6 @@ import java.util.UUID;
 @Component
 public class BookingsClient {
 
-
     private final WebClient webClient;
 
     public BookingsClient(@Qualifier("bookingWebClient") WebClient webClient) {

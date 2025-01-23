@@ -25,5 +25,11 @@ public class WebClientConfig {
     public WebClient userWebClient(WebClient.Builder builder) {
         return builder.baseUrl("http://userservice:8080").build();
     }
+
+    @Bean
+    @Qualifier("scheduleWebClient")
+    public WebClient scheduleWebClient(WebClient.Builder builder) {
+        return builder.baseUrl("http://schedulesservice:8080").build();
+    }
 }
 

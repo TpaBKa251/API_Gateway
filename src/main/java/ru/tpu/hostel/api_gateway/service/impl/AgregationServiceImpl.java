@@ -10,6 +10,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.client.AdminClient;
 import ru.tpu.hostel.api_gateway.client.BookingsClient;
+import ru.tpu.hostel.api_gateway.client.SchedulesClient;
 import ru.tpu.hostel.api_gateway.client.UserClient;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventDto;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventDtoResponse;
@@ -45,6 +46,7 @@ public class AgregationServiceImpl implements AgregationService {
     private final UserClient userClient;
     private final BookingsClient bookingsClient;
     private final AdminClient administrationClient;
+    private final SchedulesClient schedulesClient;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Override
@@ -62,7 +64,7 @@ public class AgregationServiceImpl implements AgregationService {
                         JSONObject jsonObject = new JSONObject(jsonBody);
                         return Mono.just(BigDecimal.valueOf(jsonObject.getDouble("balance")));
                     } catch (JSONException e) {
-                        return Mono.empty();
+                        return Mono.just(BigDecimal.ZERO);
                     }
                 });
 
@@ -73,7 +75,8 @@ public class AgregationServiceImpl implements AgregationService {
 
         Flux<ActiveEventDto> activeBookingsFlux = Flux.concat(
                 bookingsClient.getAllByStatus(BookingStatus.BOOKED, userId),
-                bookingsClient.getAllByStatus(BookingStatus.IN_PROGRESS, userId)
+                bookingsClient.getAllByStatus(BookingStatus.IN_PROGRESS, userId),
+                schedulesClient.getActiveKitchenSchedules(userId)
         );
 
         Flux<ActiveEventDtoResponse> activeEventDtoResponseFlux = activeBookingsFlux
@@ -212,12 +215,12 @@ public class AgregationServiceImpl implements AgregationService {
             CertificateDto pediculosis = documents.stream()
                     .filter(doc -> doc.type() == DocumentType.CERTIFICATE)
                     .findFirst()
-                    .orElse(null);
+                    .orElse(new CertificateDto(null, null, null, null, null));
 
             CertificateDto fluorography = documents.stream()
                     .filter(doc -> doc.type() == DocumentType.FLUOROGRAPHY)
                     .findFirst()
-                    .orElse(null);
+                    .orElse(new CertificateDto(null, null, null, null, null));
 
             return new AdminResponseDto(
                     user.id(),

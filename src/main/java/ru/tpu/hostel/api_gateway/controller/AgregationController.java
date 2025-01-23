@@ -21,7 +21,7 @@ public class AgregationController {
                         agregationService.getWholeUser(authentication)
                                 .flatMap(response -> ServerResponse.ok().bodyValue(response))
                 )
-                .switchIfEmpty(ServerResponse.status(401).build());
+                .switchIfEmpty(ServerResponse.status(400).build());
     }
 
     public Mono<ServerResponse> getAllUsers(ServerRequest request) {
@@ -60,7 +60,7 @@ public class AgregationController {
                             .collectList()
                             .flatMap(users -> ServerResponse.ok().bodyValue(users));
                 })
-                .switchIfEmpty(ServerResponse.status(401).build());
+                .switchIfEmpty(ServerResponse.status(400).build());
     }
 
     public Mono<ServerResponse> getAllBookingsWithUsers(ServerRequest request) {
@@ -72,7 +72,7 @@ public class AgregationController {
                 .flatMap(authentication -> agregationService.getAllBookings(bookingType, date)
                         .collectList()
                         .flatMap(list -> ServerResponse.ok().bodyValue(list)))
-                .switchIfEmpty(ServerResponse.status(401).build());
+                .switchIfEmpty(ServerResponse.status(400).build());
     }
 
     public Mono<ServerResponse> getAvailableTimeSlots(ServerRequest request) {
@@ -83,7 +83,7 @@ public class AgregationController {
                 .cast(Authentication.class)
                 .flatMap(authentication -> agregationService.getAllAvailableTimeSlots(bookingType, date, authentication)
                         .flatMap(response -> ServerResponse.ok().bodyValue(response)))
-                .switchIfEmpty(ServerResponse.status(401).build());
+                .switchIfEmpty(ServerResponse.status(400).build());
     }
 }
 
