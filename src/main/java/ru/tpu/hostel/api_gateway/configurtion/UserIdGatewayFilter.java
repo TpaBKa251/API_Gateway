@@ -25,6 +25,7 @@ public class UserIdGatewayFilter implements GlobalFilter, Ordered {
 
     private static final List<String> UNMODIFIABLE_REQUESTS = List.of(
             "users/get/by/id",
+            "users/get/by/role",
             "users/get/with/roles",
             "users/get/all",
             "bookings/available/timeline",
