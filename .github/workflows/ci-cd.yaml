@@ -3,7 +3,7 @@ name: CI/CD for Gateway via SSH
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build-deploy:
