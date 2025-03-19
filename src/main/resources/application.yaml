@@ -9,12 +9,6 @@ internal:
   secret: bbc1edb7448e4c177cc8519017ccfcfd8b23b87cc7abd735ac498a2b971670d6cd7f3f24679ba6212bc67ce2fe8f643fc4787071d407e31af2ca05ea28da709c
   lifetime: 10s
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health
-
 spring:
   cloud:
     gateway:
