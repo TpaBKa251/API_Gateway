@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: gateway-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/auth-response-headers: "Authorization"
 spec:
   rules:
     - host: api-obshaga-service.ru # укажи свой домен
@@ -15,4 +15,4 @@ spec:
               service:
                 name: gateway
                 port:
-                  number: 80
+                  number: 8080

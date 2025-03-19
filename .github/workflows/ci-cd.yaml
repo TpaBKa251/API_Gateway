@@ -39,4 +39,5 @@ jobs:
             kubectl apply -f k8s/deployment.yaml
             kubectl apply -f k8s/service.yaml
             kubectl apply -f k8s/ingress.yaml || echo "Ingress manifest not applied"
+            kubectl rollout restart deployment/gateway
             kubectl rollout status deployment/gateway
