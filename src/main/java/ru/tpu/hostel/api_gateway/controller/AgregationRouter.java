@@ -19,7 +19,7 @@ public class AgregationRouter {
                 .andRoute(POST("/api/get/all/users"), handler::getAllUsers)
                 .andRoute(GET("/api/bookings/get/all/{type}/{date}"), handler::getAllBookingsWithUsers)
                 .andRoute(GET("/api/bookings/get/availbale/slots/{date}/{bookingType}"), handler::getAvailableTimeSlots)
-                .andRoute(OPTIONS("/api"), handler::checkAvailability);
+                .andRoute(POST("/api"), handler::checkAvailability);
     }
 }
 
