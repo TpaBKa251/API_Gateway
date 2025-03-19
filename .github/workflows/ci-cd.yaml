@@ -1,0 +1,42 @@
+name: CI/CD for Gateway via SSH
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE=ghcr.io/tpabka251/gateway
+          docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} .
+          docker push $IMAGE:latest
+          docker push $IMAGE:${{ github.sha }}
+
+      - name: Deploy to k3s via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}            # IP или домен сервера
+          username: ${{ secrets.SSH_USER }}          # пользователь для SSH
+          key: ${{ secrets.SSH_PRIVATE_KEY }}        # приватный ключ (с кодовой фразой)
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}    # кодовая фраза к ключу
+          script: |
+            cd API_Gateway
+            git pull origin master
+            kubectl apply -f k8s/deployment.yaml
+            kubectl apply -f k8s/service.yaml
+            kubectl apply -f k8s/ingress.yaml || echo "Ingress manifest not applied"
+            kubectl rollout status deployment/gateway -n my-project
