@@ -17,9 +17,6 @@ management:
   endpoint:
     health:
       show-details: always
-  security:
-    enabled: false  # Отключает защиту для всех актюаторов (НЕБЕЗОПАСНО В ПРОДЕ!)
-
 
 spring:
   cloud:
