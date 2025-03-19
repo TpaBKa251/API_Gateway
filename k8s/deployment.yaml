@@ -31,15 +31,16 @@ spec:   # Запускаем 1 новый pod перед удалением ст
             httpGet:
               path: /actuator/health  # эндпоинт health для проверки состояния
               port: 8080
-            initialDelaySeconds: 10    # Задержка перед первым запросом
-            periodSeconds: 20          # Интервал проверки
-            timeoutSeconds: 5          # Время ожидания ответа
+            initialDelaySeconds: 600    # Задержка перед первым запросом
+            periodSeconds: 60          # Интервал проверки
+            timeoutSeconds: 10          # Время ожидания ответа
             failureThreshold: 3        # Количество неудачных попыток до перезапуска
+
           readinessProbe:
             httpGet:
               path: /actuator/health  # тот же эндпоинт для проверки готовности
               port: 8080
-            initialDelaySeconds: 5    # Задержка перед первым запросом
-            periodSeconds: 5          # Интервал проверки
-            timeoutSeconds: 3         # Время ожидания ответа
+            initialDelaySeconds: 300    # Задержка перед первым запросом
+            periodSeconds: 20          # Интервал проверки
+            timeoutSeconds: 10         # Время ожидания ответа
             failureThreshold: 3
