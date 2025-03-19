@@ -5,6 +5,11 @@ metadata:
   labels:
     app: gateway
 spec:   # Запускаем 1 новый pod перед удалением старого
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1         # Максимально количество новых контейнеров, которые могут быть созданы во время обновления
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: gateway
@@ -31,16 +36,16 @@ spec:   # Запускаем 1 новый pod перед удалением ст
             httpGet:
               path: /actuator/health  # эндпоинт health для проверки состояния
               port: 8080
-            initialDelaySeconds: 600    # Задержка перед первым запросом
+            initialDelaySeconds: 300    # Задержка перед первым запросом
             periodSeconds: 60          # Интервал проверки
-            timeoutSeconds: 10          # Время ожидания ответа
+            timeoutSeconds: 30          # Время ожидания ответа
             failureThreshold: 3        # Количество неудачных попыток до перезапуска
 
           readinessProbe:
             httpGet:
               path: /actuator/health  # тот же эндпоинт для проверки готовности
               port: 8080
-            initialDelaySeconds: 300    # Задержка перед первым запросом
+            initialDelaySeconds: 120    # Задержка перед первым запросом
             periodSeconds: 20          # Интервал проверки
-            timeoutSeconds: 10         # Время ожидания ответа
+            timeoutSeconds: 30         # Время ожидания ответа
             failureThreshold: 3
