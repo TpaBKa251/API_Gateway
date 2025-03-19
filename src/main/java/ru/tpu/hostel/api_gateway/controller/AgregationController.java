@@ -71,8 +71,7 @@ public class AgregationController {
                 .cast(Authentication.class)
                 .flatMap(authentication -> agregationService.getAllBookings(bookingType, date)
                         .collectList()
-                        .flatMap(list -> ServerResponse.ok().bodyValue(list)))
-                .switchIfEmpty(ServerResponse.status(400).build());
+                        .flatMap(list -> ServerResponse.ok().bodyValue(list)));
     }
 
     public Mono<ServerResponse> getAvailableTimeSlots(ServerRequest request) {

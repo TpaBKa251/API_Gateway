@@ -32,7 +32,8 @@ public class UserIdGatewayFilter implements GlobalFilter, Ordered {
             "balance",
             "documents/edit",
             "users/get/by/name",
-            "responsibles"
+            "responsibles",
+            "users/get/by/role"
     );
 
     @Override

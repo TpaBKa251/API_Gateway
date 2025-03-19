@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,6 +17,7 @@ import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
@@ -54,7 +56,7 @@ public class JwtAuthenticationFilter implements WebFilter {
         String token = extractToken(exchange.getRequest().getHeaders());
 
         if (token == null || !validateToken(token)) {
-            throw new ServiceUnavailableException("Вы не авторизованы");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Токен истек или недействителен");
         }
 
         Claims claims = getClaimsFromToken(token);
