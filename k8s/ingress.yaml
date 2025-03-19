@@ -4,6 +4,9 @@ metadata:
   name: gateway-ingress
   annotations:
     nginx.ingress.kubernetes.io/auth-response-headers: "Authorization"
+    traefik.ingress.kubernetes.io/retry: "true"
+    traefik.ingress.kubernetes.io/retry.attempts: "3"
+    traefik.ingress.kubernetes.io/retry.initialinterval: "5s"
 spec:
   rules:
     - host: api-obshaga-service.ru # укажи свой домен

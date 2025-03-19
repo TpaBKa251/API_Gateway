@@ -39,10 +39,11 @@ public class JwtAuthenticationFilter implements WebFilter {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    private final static List<String> PERMITTED_ENDPOINTS = List.of(
+    private static final List<String> PERMITTED_ENDPOINTS = List.of(
             "/users",
             "/sessions",
-            "/sessions/auth/token"
+            "/sessions/auth/token",
+            "/api"
     );
 
     @Override

@@ -5,6 +5,11 @@ metadata:
   labels:
     app: gateway
 spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1   # Максимум 1 pod недоступен в момент деплоя
+      maxSurge: 1         # Запускаем 1 новый pod перед удалением старого
   selector:
     matchLabels:
       app: gateway
@@ -19,6 +24,18 @@ spec:
           image: ghcr.io/tpabka251/gateway:latest
           ports:
             - containerPort: 8080
+          readinessProbe: # Проверяет, готов ли сервис принимать трафик
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe: # Проверяет, жив ли контейнер (если нет — рестарт)
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
           resources:
             requests:
               cpu: "100m"
