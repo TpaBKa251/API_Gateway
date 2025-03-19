@@ -6,7 +6,7 @@ import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
-import static org.springframework.web.reactive.function.server.RequestPredicates.PATCH;
+import static org.springframework.web.reactive.function.server.RequestPredicates.OPTIONS;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
@@ -18,7 +18,8 @@ public class AgregationRouter {
         return route(GET("/api/get/whole/user"), handler::getWholeUser)
                 .andRoute(POST("/api/get/all/users"), handler::getAllUsers)
                 .andRoute(GET("/api/bookings/get/all/{type}/{date}"), handler::getAllBookingsWithUsers)
-                .andRoute(GET("/api/bookings/get/availbale/slots/{date}/{bookingType}"), handler::getAvailableTimeSlots);
+                .andRoute(GET("/api/bookings/get/availbale/slots/{date}/{bookingType}"), handler::getAvailableTimeSlots)
+                .andRoute(OPTIONS("/api"), handler::checkAvailability);
     }
 }
 

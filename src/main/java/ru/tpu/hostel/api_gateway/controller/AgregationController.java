@@ -84,6 +84,13 @@ public class AgregationController {
                         .flatMap(response -> ServerResponse.ok().bodyValue(response)))
                 .switchIfEmpty(ServerResponse.status(400).build());
     }
+
+    public Mono<ServerResponse> checkAvailability(ServerRequest request) {
+        return request.principal()
+                .cast(Authentication.class)
+                .flatMap(authentication -> ServerResponse.ok().bodyValue("Сервер доступен"))
+                .switchIfEmpty(ServerResponse.status(503).build());
+    }
 }
 
 
