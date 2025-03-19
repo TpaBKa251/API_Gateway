@@ -1,5 +1,7 @@
 package ru.tpu.hostel.api_gateway.configurtion;
 
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -26,6 +28,11 @@ public class CorsConfig implements WebFluxConfigurer {
         source.registerCorsConfiguration("/**", corsConfig);
 
         return new CorsWebFilter(source);
+    }
+
+    @Bean
+    public HealthIndicator customHealthIndicator() {
+        return () -> Health.up().build();
     }
 
     @Override
