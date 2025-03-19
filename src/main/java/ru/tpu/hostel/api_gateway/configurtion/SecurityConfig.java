@@ -112,6 +112,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/sessions/auth/token").permitAll()
                         .pathMatchers(HttpMethod.POST, "/sessions/auth/token").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api").permitAll()
+                        .pathMatchers("/actuator/health").permitAll()
                         .anyExchange().authenticated()
                 )
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)

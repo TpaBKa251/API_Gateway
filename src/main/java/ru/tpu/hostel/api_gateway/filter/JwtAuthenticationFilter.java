@@ -43,7 +43,8 @@ public class JwtAuthenticationFilter implements WebFilter {
             "/users",
             "/sessions",
             "/sessions/auth/token",
-            "/api"
+            "/api",
+            "/actuator/health"
     );
 
     @Override
