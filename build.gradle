@@ -36,7 +36,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server' // Для JWT аутентификации
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-configuration-processor' // Для работы с конфигурационными аннотациями
-    //implementation 'org.springframework.boot:spring-boot-starter-actuator' // Для актюаторов
+    implementation 'org.springframework.boot:spring-boot-starter-actuator' // Для актюаторов
 
     // Зависимости для JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
