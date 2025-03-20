@@ -1,4 +1,4 @@
-name: CI/CD for Gateway via SSH
+name: CI/CD for Gateway
 
 on:
   push:
@@ -70,7 +70,7 @@ jobs:
 
     # Джоб для запуска приложения в Docker и повторного тестирования
   dockerized:
-    name: Run Tests in Docker
+    name: Build and run tests in Docker
     runs-on: ubuntu-latest
     needs: test
 
@@ -107,7 +107,7 @@ jobs:
 
       # Запуск тестов внутри Docker
       - name: Run tests inside Docker
-        run: docker exec my-app /app/gradlew test
+        run: docker exec my-app /app/gradlew clean test
 
       # Остановка и удаление контейнеров
       - name: Stop and remove containers
@@ -145,8 +145,8 @@ jobs:
           script: |
             cd API_Gateway
             git pull origin master
-            kubectl apply -f k8s/deployment.yaml
-            kubectl apply -f k8s/service.yaml
-            kubectl apply -f k8s/ingress.yaml || echo "Ingress manifest not applied"
-            kubectl rollout restart deployment/gateway
-            kubectl rollout status deployment/gateway
+            sudo kubectl apply -f k8s/deployment.yaml
+            sudo kubectl apply -f k8s/service.yaml
+            sudo kubectl apply -f k8s/ingress.yaml || echo "Ingress manifest not applied"
+            sudo kubectl rollout restart deployment/gateway
+            sudo kubectl rollout status deployment/gateway
