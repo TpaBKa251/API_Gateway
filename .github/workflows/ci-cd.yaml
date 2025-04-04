@@ -168,8 +168,8 @@ jobs:
           script: |
             cd API_Gateway
             git pull origin master
-            kubectl apply -f k8s/deployment.yaml
-            kubectl apply -f k8s/service.yaml
-            kubectl apply -f k8s/ingress.yaml || echo "Ingress manifest not applied"
-            kubectl rollout restart deployment/gateway
-            kubectl rollout status deployment/gateway
+            sudo kubectl apply -f k8s/deployment.yaml
+            sudo kubectl apply -f k8s/service.yaml
+            sudo kubectl apply -f k8s/ingress.yaml || echo "Ingress manifest not applied"
+            sudo kubectl rollout restart deployment/gateway
+            sudo kubectl rollout status deployment/gateway
