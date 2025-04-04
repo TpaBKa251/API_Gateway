@@ -42,6 +42,13 @@ spring:
           uri: http://notificationservice:8080
           predicates:
             - Path=/notifications/**
+        - id: grafana
+          uri: http://grafana.monitoring.svc.cluster.local:3000
+          predicates:
+            - Path=/grafana/**
+          filters:
+            - RewritePath=/grafana/(?<segment>.*), /$\{segment}
+            - RemoveRequestHeader=Cookie
 
 
 
