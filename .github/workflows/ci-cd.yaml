@@ -166,6 +166,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}        # приватный ключ (с кодовой фразой)
           passphrase: ${{ secrets.SSH_PASSPHRASE }}    # кодовая фраза к ключу
           script: |
+            echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             cd API_Gateway
             git pull origin master
             sudo kubectl apply -f k8s/deployment.yaml
