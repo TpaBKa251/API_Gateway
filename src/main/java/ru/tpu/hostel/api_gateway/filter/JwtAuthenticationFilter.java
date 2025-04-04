@@ -44,14 +44,16 @@ public class JwtAuthenticationFilter implements WebFilter {
             "/sessions",
             "/sessions/auth/token",
             "/api",
-            "/actuator/health"
+            "/actuator/health",
+            "/actuator",
+            "/grafana"
     );
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String endpoint = exchange.getRequest().getURI().getPath();
 
-        if (PERMITTED_ENDPOINTS.contains(endpoint)) {
+        if (PERMITTED_ENDPOINTS.contains(endpoint) || endpoint.contains("actuator") || endpoint.contains("grafana")) {
             return chain.filter(exchange);
         }
 
