@@ -134,7 +134,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew build sonarqube --info
-    continue-on-error: true # <-- Ошибки не ломают CI/CD
+    continue-on-error: true
 
   deploy:
     name: Deploy on Prod
