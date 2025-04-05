@@ -66,8 +66,4 @@ spring:
           predicates:
             - Path=/grafana/**
           filters:
-            - AddResponseHeader=Access-Control-Allow-Origin, "https://api-obshaga-service.ru"
-            - AddResponseHeader=Access-Control-Allow-Methods, "GET, POST, PUT, DELETE, OPTIONS"
-            - AddResponseHeader=Access-Control-Allow-Headers, "Origin, Content-Type, Authorization, X-Grafana-Org-Id, X-Grafana-Device-Id, Accept"
-            - AddResponseHeader=Access-Control-Allow-Credentials, "true"
             - RewritePath=/grafana/(?<segment>.*), /grafana/${segment}
