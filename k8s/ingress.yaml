@@ -4,6 +4,9 @@ metadata:
   name: gateway-ingress
   annotations:
     nginx.ingress.kubernetes.io/auth-response-headers: "Authorization" # если нужно передавать авторизационные заголовки
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Origin $http_origin;
+      proxy_set_header Authorization $http_authorization;
 spec:
   rules:
     - host: api-obshaga-service.ru  # укажи свой домен

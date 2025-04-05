@@ -48,3 +48,5 @@ spring:
             - Path=/grafana/**
           filters:
             - RewritePath=/grafana/(?<segment>.*), /grafana/${segment}
+            - AddResponseHeader=Access-Control-Allow-Origin, "https://api-obshaga-service.ru"
+            - AddResponseHeader=Access-Control-Allow-Credentials, "true"
