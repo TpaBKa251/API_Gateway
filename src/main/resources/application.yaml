@@ -50,4 +50,4 @@ spring:
             - AddResponseHeader=Access-Control-Allow-Origin, https://api-obshaga-service.ru
             - AddResponseHeader=Access-Control-Allow-Methods, GET,POST,OPTIONS
             - AddResponseHeader=Access-Control-Allow-Headers, Content-Type,Authorization
-            - RewritePath=/grafana/(?<segment>.*), /$\\{segment}
+            - RewritePath=/grafana/(?<segment>.*), /${segment}
