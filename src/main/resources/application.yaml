@@ -47,8 +47,8 @@ spring:
           predicates:
             - Path=/grafana/**
           filters:
-            - RewritePath=/grafana/(?<segment>.*), /$\{segment}
-            - RemoveRequestHeader=Cookie
+            - RewritePath=/grafana/(?<segment>.*), /${segment}
+
 
 
 
