@@ -21,6 +21,25 @@ management:
 spring:
   cloud:
     gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/grafana/**]':
+            allowedOrigins: "https://api-obshaga-service.ru"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - Origin
+              - Content-Type
+              - Authorization
+              - X-Grafana-Org-Id
+              - X-Grafana-Device-Id
+              - Accept
+            allowCredentials: true
       routes:
         - id: userservice
           uri: http://userservice:8080
@@ -47,7 +66,8 @@ spring:
           predicates:
             - Path=/grafana/**
           filters:
-            - AddResponseHeader=Access-Control-Allow-Origin, https://api-obshaga-service.ru
-            - AddResponseHeader=Access-Control-Allow-Methods, GET,POST,OPTIONS
-            - AddResponseHeader=Access-Control-Allow-Headers, Content-Type,Authorization
+            - AddResponseHeader=Access-Control-Allow-Origin, "https://api-obshaga-service.ru"
+            - AddResponseHeader=Access-Control-Allow-Methods, "GET, POST, PUT, DELETE, OPTIONS"
+            - AddResponseHeader=Access-Control-Allow-Headers, "Origin, Content-Type, Authorization, X-Grafana-Org-Id, X-Grafana-Device-Id, Accept"
+            - AddResponseHeader=Access-Control-Allow-Credentials, "true"
             - RewritePath=/grafana/(?<segment>.*), /grafana/${segment}
