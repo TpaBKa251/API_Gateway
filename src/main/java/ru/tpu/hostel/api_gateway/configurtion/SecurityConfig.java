@@ -113,7 +113,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/sessions/auth/token").permitAll()
                         .pathMatchers(HttpMethod.OPTIONS, "/api").permitAll()
                         .pathMatchers("/actuator/**").permitAll()
-                        .pathMatchers("/grafana/**").permitAll()
+                        .pathMatchers("/**grafana**").permitAll()
                         .anyExchange().authenticated()
                 )
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
