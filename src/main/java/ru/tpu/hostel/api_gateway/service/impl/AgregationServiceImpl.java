@@ -242,10 +242,6 @@ public class AgregationServiceImpl implements AgregationService {
                 ? bookingsClient.getAllByDate(localDate)
                 : bookingsClient.getAllByTypeAndDate(type, localDate);
 
-        if (bookings.hasElements() != Mono.just(Boolean.TRUE)) {
-            return Flux.empty();
-        }
-
         return bookings
                 .groupBy(booking -> booking.startTime() + "-" + booking.endTime())
                 .flatMap(groupedBookings -> groupedBookings.collectList()
@@ -272,7 +268,7 @@ public class AgregationServiceImpl implements AgregationService {
                                                             bookingId
                                                     );
                                                 })
-                                                .collect(Collectors.toList());
+                                                .toList();
 
                                         return new BookingResponseWithUsersDto(
                                                 bookingsList.get(0).startTime(),
