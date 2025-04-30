@@ -31,95 +31,110 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(auth -> auth
-                        .pathMatchers(HttpMethod.POST, "/api/get/all/users").hasRole("ADMINISTRATION")
-                        //.pathMatchers(HttpMethod.GET, "/api/get/all/users").hasRole("ADMINISTRATION")
-                        .pathMatchers(HttpMethod.POST, "/balance").hasRole("ADMINISTRATION")
-                        .pathMatchers(HttpMethod.PATCH, "/balance/edit").hasRole("ADMINISTRATION")
-                        .pathMatchers(HttpMethod.PATCH, "/balance/edit/adding").hasRole("ADMINISTRATION")
-                        .pathMatchers(HttpMethod.GET, "/balance/get/all").hasRole("ADMINISTRATION")
-                        .pathMatchers(HttpMethod.GET, "/balance/get/short/").hasRole("ADMINISTRATION")
-                        .pathMatchers(HttpMethod.POST, "/documents").hasRole("ADMINISTRATION")
-                        .pathMatchers(HttpMethod.PATCH, "/documents/edit").hasRole("ADMINISTRATION")
-                        .pathMatchers(HttpMethod.GET, "/documents/get/all").hasRole("ADMINISTRATION")
-                        .pathMatchers(HttpMethod.GET, "/users/get/all").hasRole("ADMINISTRATION")
-                        .pathMatchers(HttpMethod.GET, "api/bookings/get/all/{type}/{date}").access((authentication, context) -> {
-                            String bookingType = context.getVariables().get("type").toString();
+                                .pathMatchers(HttpMethod.POST, "/api/get/all/users").hasRole("ADMINISTRATION")
+                                //.pathMatchers(HttpMethod.GET, "/api/get/all/users").hasRole("ADMINISTRATION")
+                                .pathMatchers(HttpMethod.POST, "/balance").hasRole("ADMINISTRATION")
+                                .pathMatchers(HttpMethod.PATCH, "/balance/edit").hasRole("ADMINISTRATION")
+                                .pathMatchers(HttpMethod.PATCH, "/balance/edit/adding").hasRole("ADMINISTRATION")
+                                .pathMatchers(HttpMethod.GET, "/balance/get/all").hasRole("ADMINISTRATION")
+                                .pathMatchers(HttpMethod.GET, "/balance/get/short/").hasRole("ADMINISTRATION")
+                                .pathMatchers(HttpMethod.POST, "/documents").hasRole("ADMINISTRATION")
+                                .pathMatchers(HttpMethod.PATCH, "/documents/edit").hasRole("ADMINISTRATION")
+                                .pathMatchers(HttpMethod.GET, "/documents/get/all").hasRole("ADMINISTRATION")
+                                .pathMatchers(HttpMethod.GET, "/users/get/all").hasRole("ADMINISTRATION")
+                                .pathMatchers(HttpMethod.GET, "api/bookings/get/all/{type}/{date}").access((authentication, context) -> {
+                                    String bookingType = context.getVariables().get("type").toString();
 
-                            List<String> roles;
-                            switch (bookingType.toUpperCase()) {
-                                case "GYM" -> roles = List.of(
-                                        "ROLE_ADMINISTRATION",
-                                        "ROLE_HOSTEL_SUPERVISOR",
-                                        "ROLE_MAIN_RESPONSIBLE_GYM"
-                                );
-                                case "HALL" -> roles = List.of(
-                                        "ROLE_ADMINISTRATION",
-                                        "ROLE_HOSTEL_SUPERVISOR",
-                                        "ROLE_RESPONSIBLE_HALL"
-                                );
-                                case "INTERNET" -> roles = List.of(
-                                        "ROLE_ADMINISTRATION",
-                                        "ROLE_HOSTEL_SUPERVISOR",
-                                        "ROLE_RESPONSIBLE_INTERNET"
-                                );
-                                case "ALL" -> roles = List.of("ROLE_ADMINISTRATION", "ROLE_HOSTEL_SUPERVISOR");
-                                default -> {
-                                    return Mono.just(new AuthorizationDecision(false));
-                                }
-                            }
+                                    List<String> roles;
+                                    switch (bookingType.toUpperCase()) {
+                                        case "GYM" -> roles = List.of(
+                                                "ROLE_ADMINISTRATION",
+                                                "ROLE_HOSTEL_SUPERVISOR",
+                                                "ROLE_RESPONSIBLE_GYM"
+                                        );
+                                        case "HALL" -> roles = List.of(
+                                                "ROLE_ADMINISTRATION",
+                                                "ROLE_HOSTEL_SUPERVISOR",
+                                                "ROLE_RESPONSIBLE_HALL"
+                                        );
+                                        case "INTERNET" -> roles = List.of(
+                                                "ROLE_ADMINISTRATION",
+                                                "ROLE_HOSTEL_SUPERVISOR",
+                                                "ROLE_RESPONSIBLE_INTERNET"
+                                        );
+                                        case "ALL" -> roles = List.of("ROLE_ADMINISTRATION", "ROLE_HOSTEL_SUPERVISOR");
+                                        default -> {
+                                            return Mono.just(new AuthorizationDecision(false));
+                                        }
+                                    }
 
-                            return authentication
-                                    .map(auth1 -> auth1.isAuthenticated() &&
-                                            auth1.getAuthorities().stream()
-                                                    .anyMatch(grantedAuthority ->
-                                                            roles.contains(grantedAuthority.getAuthority())))
-                                    .map(AuthorizationDecision::new);
-                        })
-                        .pathMatchers(HttpMethod.POST, "/responsibles").access((authentication, context) -> {
-                            String responsibleType = context.getVariables().get("type").toString();
-
-                            List<String> roles;
-                            switch (responsibleType.toUpperCase()) {
-                                case "GYM" -> roles = List.of(
-                                        "ROLE_ADMINISTRATION",
-                                        "ROLE_HOSTEL_SUPERVISOR",
-                                        "ROLE_MAIN_RESPONSIBLE_GYM"
-                                );
-                                case "HALL" -> roles = List.of(
-                                        "ROLE_ADMINISTRATION",
-                                        "ROLE_HOSTEL_SUPERVISOR",
-                                        "ROLE_RESPONSIBLE_HALL"
-                                );
-                                case "INTERNET" -> roles = List.of(
-                                        "ROLE_ADMINISTRATION",
-                                        "ROLE_HOSTEL_SUPERVISOR",
-                                        "ROLE_RESPONSIBLE_INTERNET"
-                                );
-                                default -> {
-                                    return Mono.just(new AuthorizationDecision(false));
-                                }
-                            }
-
-                            return authentication
-                                    .map(authentication1 -> authentication1.isAuthenticated() &&
-                                            authentication1.getAuthorities().stream()
-                                                    .anyMatch(grantedAuthority ->
-                                                            roles.contains(grantedAuthority.getAuthority())))
-                                    .map(AuthorizationDecision::new);
-                        })
-                        .pathMatchers(HttpMethod.POST, "/users").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/sessions").permitAll()
-                        .pathMatchers(HttpMethod.GET, "/sessions/auth/token").permitAll()
-                        .pathMatchers(HttpMethod.POST, "/sessions/auth/token").permitAll()
-                        .pathMatchers(HttpMethod.OPTIONS, "/api").permitAll()
-                        .pathMatchers("/actuator/**").permitAll()
-                        .pathMatchers("/grafana**").permitAll()
-                        .pathMatchers("/grafana/**").permitAll()
-                        .pathMatchers("/login**").permitAll()
-                        .pathMatchers("/login/**").permitAll()
-                        .pathMatchers("/error/**").permitAll()
-                        .pathMatchers("/error**").permitAll()
-                        .anyExchange().authenticated()
+                                    return authentication
+                                            .map(auth1 -> auth1.isAuthenticated() &&
+                                                    auth1.getAuthorities().stream()
+                                                            .anyMatch(grantedAuthority ->
+                                                                    roles.contains(grantedAuthority.getAuthority())))
+                                            .map(AuthorizationDecision::new);
+                                })
+                                .pathMatchers(HttpMethod.POST, "/responsibles").hasAnyRole(
+                                        "ADMINISTRATION",
+                                        "HOSTEL_SUPERVISOR",
+                                        "RESPONSIBLE_KITCHEN",
+                                        "RESPONSIBLE_HALL",
+                                        "RESPONSIBLE_GYM",
+                                        "WORKER_GYM",
+                                        "RESPONSIBLE_FIRE_SAFETY",
+                                        "RESPONSIBLE_SANITARY",
+                                        "RESPONSIBLE_INTERNET",
+                                        "RESPONSIBLE_SOOP",
+                                        "WORKER_FIRE_SAFETY",
+                                        "WORKER_SANITARY",
+                                        "WORKER_SOOP"
+                                        )
+//                        .pathMatchers(HttpMethod.POST, "/responsibles").access((authentication, context) -> {
+//                            String responsibleType = context.getVariables().get("type").toString();
+//
+//                            List<String> roles;
+//                            switch (responsibleType.toUpperCase()) {
+//                                case "GYM" -> roles = List.of(
+//                                        "ROLE_ADMINISTRATION",
+//                                        "ROLE_HOSTEL_SUPERVISOR",
+//                                        "ROLE_RESPONSIBLE_GYM"
+//                                );
+//                                case "HALL" -> roles = List.of(
+//                                        "ROLE_ADMINISTRATION",
+//                                        "ROLE_HOSTEL_SUPERVISOR",
+//                                        "ROLE_RESPONSIBLE_HALL"
+//                                );
+//                                case "INTERNET" -> roles = List.of(
+//                                        "ROLE_ADMINISTRATION",
+//                                        "ROLE_HOSTEL_SUPERVISOR",
+//                                        "ROLE_RESPONSIBLE_INTERNET"
+//                                );
+//                                default -> {
+//                                    return Mono.just(new AuthorizationDecision(false));
+//                                }
+//                            }
+//
+//                            return authentication
+//                                    .map(authentication1 -> authentication1.isAuthenticated() &&
+//                                            authentication1.getAuthorities().stream()
+//                                                    .anyMatch(grantedAuthority ->
+//                                                            roles.contains(grantedAuthority.getAuthority())))
+//                                    .map(AuthorizationDecision::new);
+//                        })
+                                .pathMatchers(HttpMethod.POST, "/users").permitAll()
+                                .pathMatchers(HttpMethod.POST, "/sessions").permitAll()
+                                .pathMatchers(HttpMethod.GET, "/sessions/auth/token").permitAll()
+                                .pathMatchers(HttpMethod.POST, "/sessions/auth/token").permitAll()
+                                .pathMatchers(HttpMethod.OPTIONS, "/api").permitAll()
+                                .pathMatchers("/actuator/**").permitAll()
+                                .pathMatchers("/grafana**").permitAll()
+                                .pathMatchers("/grafana/**").permitAll()
+                                .pathMatchers("/login**").permitAll()
+                                .pathMatchers("/login/**").permitAll()
+                                .pathMatchers("/error/**").permitAll()
+                                .pathMatchers("/error**").permitAll()
+                                .anyExchange().authenticated()
                 )
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
