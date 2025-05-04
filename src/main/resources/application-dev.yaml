@@ -1,27 +1,4 @@
-server:
-  address: 0.0.0.0
-  port: 8080
-
-jwt:
-  secret: WS5y43NO8hme4sbPyEgIcCaR7G5NgSXlXKyc159gLhloaNAP/28XZKPCQCCDd8vp3v1NJpIic4uMX0CVbPR7+A==
-
-internal:
-  secret: bbc1edb7448e4c177cc8519017ccfcfd8b23b87cc7abd735ac498a2b971670d6cd7f3f24679ba6212bc67ce2fe8f643fc4787071d407e31af2ca05ea28da709c
-  lifetime: 10s
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health
-  endpoint:
-    health:
-      show-details: always
-
 spring:
-  profiles:
-    active: "@activatedProperties@"
-
   cloud:
     gateway:
       globalcors:
@@ -45,28 +22,22 @@ spring:
             allowCredentials: true
       routes:
         - id: userservice
-          uri: http://userservice:8080
+          uri: http://localhost:8081
           predicates:
             - Path=/users/**, /sessions/**, /roles/**
         - id: bookingsservice
-          uri: http://bookingservice:8080
+          uri: http://localhost:8082
           predicates:
             - Path=/bookings/**
         - id: administrationservice
-          uri: http://administrationservice:8080
+          uri: http://localhost:8083
           predicates:
             - Path=/balance/**, /documents/**
         - id: schedulesservice
-          uri: http://schedulesservice:8080
+          uri: http://localhost:8084
           predicates:
             - Path=/schedules/**, /responsibles/**
         - id: notificationservice
-          uri: http://notificationservice:8080
+          uri: http://localhost:8085
           predicates:
             - Path=/notifications/**
-        - id: grafana
-          uri: http://grafana.monitoring.svc.cluster.local:3000
-          predicates:
-            - Path=/grafana/**
-          filters:
-            - RewritePath=/grafana/(?<segment>.*), /grafana/${segment}
