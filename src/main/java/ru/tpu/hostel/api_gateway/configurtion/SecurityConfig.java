@@ -50,7 +50,7 @@ public class SecurityConfig {
                                 case "GYM" -> roles = List.of(
                                         "ROLE_ADMINISTRATION",
                                         "ROLE_HOSTEL_SUPERVISOR",
-                                        "ROLE_MAIN_RESPONSIBLE_GYM"
+                                        "ROLE_RESPONSIBLE_GYM"
                                 );
                                 case "HALL" -> roles = List.of(
                                         "ROLE_ADMINISTRATION",
@@ -71,38 +71,6 @@ public class SecurityConfig {
                             return authentication
                                     .map(auth1 -> auth1.isAuthenticated() &&
                                             auth1.getAuthorities().stream()
-                                                    .anyMatch(grantedAuthority ->
-                                                            roles.contains(grantedAuthority.getAuthority())))
-                                    .map(AuthorizationDecision::new);
-                        })
-                        .pathMatchers(HttpMethod.POST, "/responsibles").access((authentication, context) -> {
-                            String responsibleType = context.getVariables().get("type").toString();
-
-                            List<String> roles;
-                            switch (responsibleType.toUpperCase()) {
-                                case "GYM" -> roles = List.of(
-                                        "ROLE_ADMINISTRATION",
-                                        "ROLE_HOSTEL_SUPERVISOR",
-                                        "ROLE_MAIN_RESPONSIBLE_GYM"
-                                );
-                                case "HALL" -> roles = List.of(
-                                        "ROLE_ADMINISTRATION",
-                                        "ROLE_HOSTEL_SUPERVISOR",
-                                        "ROLE_RESPONSIBLE_HALL"
-                                );
-                                case "INTERNET" -> roles = List.of(
-                                        "ROLE_ADMINISTRATION",
-                                        "ROLE_HOSTEL_SUPERVISOR",
-                                        "ROLE_RESPONSIBLE_INTERNET"
-                                );
-                                default -> {
-                                    return Mono.just(new AuthorizationDecision(false));
-                                }
-                            }
-
-                            return authentication
-                                    .map(authentication1 -> authentication1.isAuthenticated() &&
-                                            authentication1.getAuthorities().stream()
                                                     .anyMatch(grantedAuthority ->
                                                             roles.contains(grantedAuthority.getAuthority())))
                                     .map(AuthorizationDecision::new);
