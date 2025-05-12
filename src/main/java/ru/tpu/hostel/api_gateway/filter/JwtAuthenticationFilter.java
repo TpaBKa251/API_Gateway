@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Component
+@SuppressWarnings("NullableProblems")
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter implements WebFilter {
@@ -39,24 +39,8 @@ public class JwtAuthenticationFilter implements WebFilter {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    private static final List<String> PERMITTED_ENDPOINTS = List.of(
-            "/users",
-            "/sessions",
-            "/sessions/auth/token",
-            "/api",
-            "/actuator/health",
-            "/actuator",
-            "/grafana"
-    );
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String endpoint = exchange.getRequest().getURI().getPath();
-
-        if (PERMITTED_ENDPOINTS.contains(endpoint) || endpoint.contains("actuator") || endpoint.contains("grafana")) {
-            return chain.filter(exchange);
-        }
-
         String token = extractToken(exchange.getRequest().getHeaders());
 
         if (token == null || !validateToken(token)) {
@@ -122,33 +106,6 @@ public class JwtAuthenticationFilter implements WebFilter {
         return new UsernamePasswordAuthenticationToken(userId, claims, authorities);
     }
 
-    public UUID getUserIdFromToken(Authentication authentication) {
-        return UUID.fromString(authentication.getPrincipal().toString());
-    }
-
-    public UUID getUserIdFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        return UUID.fromString(claims.get("userId", String.class));
-    }
-
-    public String getRolesFromToken(Authentication authentication) {
-        return authentication.getAuthorities()
-                .stream()
-                .map(role -> {
-                    String roleStr = role.toString();
-                    roleStr = roleStr.replace("ROLE_", "");
-                    return roleStr;
-                })
-                .collect(Collectors.joining(","));
-    }
-
-    private Key getSigningKey() {
-        return new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS512.getJcaName());
-    }
 }
 
 

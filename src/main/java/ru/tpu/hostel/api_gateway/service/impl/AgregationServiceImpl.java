@@ -28,7 +28,7 @@ import ru.tpu.hostel.api_gateway.dto.UserShortResponseWithBookingIdDto;
 import ru.tpu.hostel.api_gateway.dto.WholeUserResponseDto;
 import ru.tpu.hostel.api_gateway.enums.BookingStatus;
 import ru.tpu.hostel.api_gateway.enums.DocumentType;
-import ru.tpu.hostel.api_gateway.filter.JwtAuthenticationFilter;
+import ru.tpu.hostel.api_gateway.filter.JwtService;
 import ru.tpu.hostel.api_gateway.mapper.UserMapper;
 import ru.tpu.hostel.api_gateway.service.AgregationService;
 
@@ -36,7 +36,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -47,12 +46,12 @@ public class AgregationServiceImpl implements AgregationService {
     private final BookingsClient bookingsClient;
     private final AdminClient administrationClient;
     private final SchedulesClient schedulesClient;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtService jwtService;
 
     @Override
     public Mono<WholeUserResponseDto> getWholeUser(Authentication authentication) {
 
-        UUID userId = jwtAuthenticationFilter.getUserIdFromToken(authentication);
+        UUID userId = jwtService.getUserIdFromToken(authentication);
 
         Mono<UserResponseWithRoleDto> userInfoMono = userClient.getUserWithRoles(userId);
 
@@ -284,7 +283,7 @@ public class AgregationServiceImpl implements AgregationService {
     @Override
     public Mono<AvailableTimeSlotsDto> getAllAvailableTimeSlots(String type, String localDate, Authentication authentication) {
         Mono<AvailableTimeSlotsWithResponsible> availableTimeSlotsWithResponsible = bookingsClient
-                .getAvailableTimeSlots(localDate, type, jwtAuthenticationFilter.getUserIdFromToken(authentication));
+                .getAvailableTimeSlots(localDate, type, jwtService.getUserIdFromToken(authentication));
         Mono<UserShortResponseDto2> responsible = availableTimeSlotsWithResponsible.flatMap(
                 response -> userClient.getUserWithIdShort(response.responsibleId())
         );
