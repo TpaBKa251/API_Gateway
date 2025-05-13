@@ -5,20 +5,15 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authorization.AuthorizationDeniedException;
-import org.springframework.security.authorization.AuthorizationResult;
-import org.springframework.security.authorization.method.HandleAuthorizationDenied;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
-import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -30,23 +25,23 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("NullableProblems")
-@RequiredArgsConstructor
 @Slf4j
-@Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter implements WebFilter {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    private final String secretKey;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String token = extractToken(exchange.getRequest().getHeaders());
 
         if (token == null) {
+            log.warn("Токен пустой");
             return chain.filter(exchange);
         }
 
         if (!validateToken(token)) {
+            log.error("Токен истек или недействителен");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Токен истек или недействителен");
         }
 

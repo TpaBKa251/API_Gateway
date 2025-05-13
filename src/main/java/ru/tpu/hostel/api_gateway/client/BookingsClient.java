@@ -9,9 +9,7 @@ import ru.tpu.hostel.api_gateway.dto.ActiveEventDto;
 import ru.tpu.hostel.api_gateway.dto.ActiveEventWithUserDto;
 import ru.tpu.hostel.api_gateway.dto.AvailableTimeSlotsWithResponsible;
 import ru.tpu.hostel.api_gateway.enums.BookingStatus;
-import ru.tpu.hostel.api_gateway.enums.BookingType;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 @Component
