@@ -2,7 +2,6 @@ package ru.tpu.hostel.api_gateway.filter;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.authorization.AuthorizationResult;
+import org.springframework.security.authorization.method.HandleAuthorizationDenied;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,18 +24,15 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
-import ru.tpu.hostel.api_gateway.exception.ServiceUnavailableException;
 
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("NullableProblems")
 @RequiredArgsConstructor
 @Slf4j
+@Component
 public class JwtAuthenticationFilter implements WebFilter {
 
     @Value("${jwt.secret}")
@@ -43,7 +42,11 @@ public class JwtAuthenticationFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String token = extractToken(exchange.getRequest().getHeaders());
 
-        if (token == null || !validateToken(token)) {
+        if (token == null) {
+            return chain.filter(exchange);
+        }
+
+        if (!validateToken(token)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Токен истек или недействителен");
         }
 

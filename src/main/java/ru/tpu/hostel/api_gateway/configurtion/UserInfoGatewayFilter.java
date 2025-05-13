@@ -9,10 +9,7 @@ import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
-import ru.tpu.hostel.api_gateway.filter.JwtAuthenticationFilter;
 import ru.tpu.hostel.api_gateway.filter.JwtService;
 
 import java.util.UUID;

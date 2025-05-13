@@ -48,6 +48,7 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway' // Gateway
     implementation 'org.springframework.boot:spring-boot-starter-security' // Для безопасности
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server' // Для JWT аутентификации
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-configuration-processor' // Для работы с конфигурационными аннотациями
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // Для актюаторов
