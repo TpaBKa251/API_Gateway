@@ -1,4 +1,4 @@
-package ru.tpu.hostel.api_gateway.filter;
+package ru.tpu.hostel.api_gateway.service.impl;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

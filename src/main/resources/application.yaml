@@ -13,12 +13,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health, prometheus, info, beans, trace
   endpoint:
     health:
       show-details: always
+  tracing:
+    enabled: true
 
 spring:
+  application:
+    name: api-gateway
   profiles:
     active: "@activatedProperties@"
 
@@ -70,3 +74,17 @@ spring:
             - Path=/grafana/**
           filters:
             - RewritePath=/grafana/(?<segment>.*), /grafana/${segment}
+
+otlp:
+  tracing:
+    export-enabled: true
+    endpoint: http://tempo.monitoring.svc.cluster.local:4317
+    timeout: 5000
+    service-name: api-gateway
+
+rest:
+  base-url:
+    user-service: http://userservice:8080
+    booking-service: http://bookingservice:8080
+    schedule-service: http://schedulesservice:8080
+    admin-service: http://administrationservice:8080

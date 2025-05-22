@@ -15,6 +15,12 @@ java {
     }
 }
 
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
 repositories {
     mavenCentral()
 }
@@ -50,8 +56,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server' // Для JWT аутентификации
     implementation 'org.springframework.security:spring-security-oauth2-jose'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-configuration-processor' // Для работы с конфигурационными аннотациями
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // Для актюаторов
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.4.4'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.37.0'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // Зависимости для JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -61,6 +69,7 @@ dependencies {
     // Для работы с Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
     // Для тестирования
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

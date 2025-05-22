@@ -1,4 +1,4 @@
-package ru.tpu.hostel.api_gateway.configurtion;
+package ru.tpu.hostel.api_gateway.configurtion.security;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -77,6 +77,19 @@ public class SecurityConfig {
                                                             roles.contains(grantedAuthority.getAuthority())))
                                     .map(AuthorizationDecision::new);
                         })
+                        .pathMatchers(HttpMethod.PATCH, "/schedules/kitchen/swap", "/schedules/kitchen/mark")
+                        .hasAnyRole(
+                                "RESPONSIBLE_KITCHEN",
+                                "HOSTEL_SUPERVISOR",
+                                "ADMINISTRATION",
+                                "FLOOR_SUPERVISOR"
+                        )
+                        .pathMatchers(HttpMethod.DELETE, "/schedules/kitchen").hasAnyRole(
+                                "RESPONSIBLE_KITCHEN",
+                                "HOSTEL_SUPERVISOR",
+                                "ADMINISTRATION",
+                                "FLOOR_SUPERVISOR"
+                        )
                         .pathMatchers(HttpMethod.POST, "/users").permitAll()
                         .pathMatchers(HttpMethod.POST, "/sessions").permitAll()
                         .pathMatchers(HttpMethod.GET, "/sessions/auth/token").permitAll()

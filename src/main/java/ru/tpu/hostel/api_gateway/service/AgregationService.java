@@ -28,7 +28,7 @@ public interface AgregationService {
             String certDate
     );
 
-    Flux<BookingResponseWithUsersDto> getAllBookings(String type, String LocalDate);
+    Flux<BookingResponseWithUsersDto> getAllBookings(String type, String localDate);
 
-    Mono<AvailableTimeSlotsDto> getAllAvailableTimeSlots(String type, String LocalDate, Authentication authentication);
+    Mono<AvailableTimeSlotsDto> getAllAvailableTimeSlots(String type, String localDate, Authentication authentication);
 }

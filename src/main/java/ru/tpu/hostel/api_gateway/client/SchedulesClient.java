@@ -17,11 +17,21 @@ public class SchedulesClient {
         this.webClient = webClient;
     }
 
-    public Flux<ActiveEventDto> getActiveKitchenSchedules(UUID userId) {
+    public Flux<ActiveEventDto> getActiveKitchenSchedules(String identifier) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/schedules/kitchen/get/on/room/{userId}")
-                        .build(userId))
+                        .path("/schedules/kitchen/get/on/room/{identifier}")
+                        .build(identifier))
+                .retrieve()
+                .bodyToFlux(ActiveEventDto.class);
+    }
+
+    public Flux<ActiveEventDto> getActiveResponsibles(UUID userId) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/responsibles/active-event")
+                        .build())
+                .header("X-User-Id", userId.toString())
                 .retrieve()
                 .bodyToFlux(ActiveEventDto.class);
     }

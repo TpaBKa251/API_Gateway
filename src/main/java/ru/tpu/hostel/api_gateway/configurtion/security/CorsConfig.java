@@ -1,4 +1,4 @@
-package ru.tpu.hostel.api_gateway.configurtion;
+package ru.tpu.hostel.api_gateway.configurtion.security;
 
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;

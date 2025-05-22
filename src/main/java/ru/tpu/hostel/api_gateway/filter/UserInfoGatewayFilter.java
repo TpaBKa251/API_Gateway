@@ -1,6 +1,7 @@
-package ru.tpu.hostel.api_gateway.configurtion;
+package ru.tpu.hostel.api_gateway.filter;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
@@ -10,10 +11,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import ru.tpu.hostel.api_gateway.filter.JwtService;
+import ru.tpu.hostel.api_gateway.enums.Microservice;
+import ru.tpu.hostel.api_gateway.service.impl.JwtService;
 
 import java.util.UUID;
 
+@Slf4j
 @SuppressWarnings({"NullableProblems", "ReactorTransformationOnMonoVoid"})
 @Component
 @RequiredArgsConstructor
@@ -24,6 +27,12 @@ public class UserInfoGatewayFilter implements GlobalFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        String path = exchange.getRequest()
+                .getURI()
+                .getPath()
+                .split("/")[1];
+        log.info("[REDIRECT] Перенаправляю на {}", Microservice.getMicroserviceAdditionalName(path));
+
         return exchange.getPrincipal()
                 .cast(Authentication.class)
                 .flatMap(authentication -> {

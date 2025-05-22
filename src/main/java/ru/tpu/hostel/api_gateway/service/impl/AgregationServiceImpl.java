@@ -28,33 +28,98 @@ import ru.tpu.hostel.api_gateway.dto.UserShortResponseWithBookingIdDto;
 import ru.tpu.hostel.api_gateway.dto.WholeUserResponseDto;
 import ru.tpu.hostel.api_gateway.enums.BookingStatus;
 import ru.tpu.hostel.api_gateway.enums.DocumentType;
-import ru.tpu.hostel.api_gateway.filter.JwtService;
+import ru.tpu.hostel.api_gateway.enums.EventType;
+import ru.tpu.hostel.api_gateway.exception.ServiceException;
 import ru.tpu.hostel.api_gateway.mapper.UserMapper;
 import ru.tpu.hostel.api_gateway.service.AgregationService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AgregationServiceImpl implements AgregationService {
 
+    private static final UserResponseWithRoleDto DEFAULT_USER_RESPONSE_WITH_ROLE = new UserResponseWithRoleDto(
+            null,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            List.of()
+    );
+
+    private static final CertificateDto DEFAULT_CERTIFICATE_DTO = new CertificateDto(
+            null,
+            null,
+            DocumentType.CERTIFICATE,
+            LocalDate.of(0, 1, 1),
+            LocalDate.of(0, 1, 1)
+    );
+
+    private static final CertificateDto DEFAULT_FLUOROGRAPHY_DTO = new CertificateDto(
+            null,
+            null,
+            DocumentType.FLUOROGRAPHY,
+            LocalDate.of(0, 1, 1),
+            LocalDate.of(0, 1, 1)
+    );
+
+    private static final ActiveEventDto DEFAULT_ACTIVE_EVENT_DTO = new ActiveEventDto(
+            null,
+            LocalDateTime.of(0, 1, 1, 0, 0),
+            LocalDateTime.of(0, 1, 1, 0, 0),
+            null,
+            ""
+    );
+
+    private static final List<String> CLOSABLE_EVENT_TYPES = List.of(
+            EventType.GYM.getEventTypeName(),
+            EventType.HALL.getEventTypeName(),
+            EventType.INTERNET.getEventTypeName()
+    );
+
+    private static final int MAX_ERRORS_COUNT_ON_GET_WHOLE_USER = 8;
+
     private final UserClient userClient;
+
     private final BookingsClient bookingsClient;
+
     private final AdminClient administrationClient;
+
     private final SchedulesClient schedulesClient;
+
     private final JwtService jwtService;
 
     @Override
     public Mono<WholeUserResponseDto> getWholeUser(Authentication authentication) {
+        AtomicInteger currentErrorsCount = new AtomicInteger(0);
+        AtomicBoolean requestFailed = new AtomicBoolean(false);
+        AtomicBoolean userRequestFailed = new AtomicBoolean(false);
+        AtomicBoolean balanceRequestFailed = new AtomicBoolean(false);
+        AtomicBoolean certificateRequestFailed = new AtomicBoolean(false);
+        AtomicBoolean fluorographyRequestFailed = new AtomicBoolean(false);
 
         UUID userId = jwtService.getUserIdFromToken(authentication);
 
-        Mono<UserResponseWithRoleDto> userInfoMono = userClient.getUserWithRoles(userId);
+        // Инфа о юзере (кэшируем, так как к userInfoMono будем обращаться дважды)
+        Mono<UserResponseWithRoleDto> userInfoMono = userClient.getUserWithRoles(userId)
+                .onErrorResume(t -> {
+                    userRequestFailed.set(true);
+                    return handleMonoError(t, currentErrorsCount, DEFAULT_USER_RESPONSE_WITH_ROLE);
+                })
+                .cache();
 
+        // Баланс
         Mono<BigDecimal> balanceMono = administrationClient.getBalanceShort(userId)
                 .flatMap(response -> {
                     String jsonBody = response.toString().substring(
@@ -65,48 +130,125 @@ public class AgregationServiceImpl implements AgregationService {
                     } catch (JSONException e) {
                         return Mono.just(BigDecimal.ZERO);
                     }
+                })
+                .onErrorResume(t -> {
+                    balanceRequestFailed.set(true);
+                    return handleMonoError(t, currentErrorsCount, BigDecimal.ZERO);
                 });
 
-        Mono<CertificateDto> pediculosisMono = administrationClient
-                .getDocumentByType(userId, DocumentType.CERTIFICATE);
-        Mono<CertificateDto> fluorographyMono = administrationClient
-                .getDocumentByType(userId, DocumentType.FLUOROGRAPHY);
+        // Справки
+        Mono<Optional<CertificateDto>> pediculosisMono = administrationClient.getDocumentByType(
+                        userId,
+                        DocumentType.CERTIFICATE
+                )
+                .map(Optional::of)
+                .onErrorResume(t -> {
+                    certificateRequestFailed.set(true);
+                    return handleMonoError(t, currentErrorsCount);
+                });
+        Mono<Optional<CertificateDto>> fluorographyMono = administrationClient.getDocumentByType(
+                        userId,
+                        DocumentType.FLUOROGRAPHY
+                )
+                .map(Optional::of)
+                .onErrorResume(t -> {
+                    fluorographyRequestFailed.set(true);
+                    return handleMonoError(t, currentErrorsCount);
+                });
 
-        Flux<ActiveEventDto> activeBookingsFlux = Flux.concat(
-                bookingsClient.getAllByStatus(BookingStatus.BOOKED, userId),
-                bookingsClient.getAllByStatus(BookingStatus.IN_PROGRESS, userId),
-                schedulesClient.getActiveKitchenSchedules(userId)
+        // Активные ивенты (брони и дежурства)
+        Flux<ActiveEventDto> bookedBookings = bookingsClient.getAllByStatus(BookingStatus.BOOKED, userId)
+                .onErrorResume(t -> handleFluxError(t, currentErrorsCount));
+        Flux<ActiveEventDto> processedBookings = bookingsClient.getAllByStatus(BookingStatus.IN_PROGRESS, userId)
+                .onErrorResume(t -> handleFluxError(t, currentErrorsCount));
+        Flux<ActiveEventDto> kitchenSchedules = userInfoMono.flatMapMany(user -> {
+                    String identifier = user.roomNumber().isEmpty()
+                            ? userId.toString() // неэффективный вариант
+                            : user.roomNumber(); // эффективный вариант
+                    return schedulesClient.getActiveKitchenSchedules(identifier);
+                })
+                .onErrorResume(t -> handleFluxError(t, currentErrorsCount));
+        Flux<ActiveEventDto> responsibles = schedulesClient.getActiveResponsibles(userId)
+                .onErrorResume(t -> handleFluxError(t, currentErrorsCount));
+
+        // Объединение активных ивентов в один поток
+        Flux<ActiveEventDto> activeEventsFlux = Flux.concat(
+                bookedBookings,
+                processedBookings,
+                kitchenSchedules,
+                responsibles
         );
 
-        Flux<ActiveEventDtoResponse> activeEventDtoResponseFlux = activeBookingsFlux
+        // Преобразование ивентов в ДТО для ответа
+        Flux<ActiveEventDtoResponse> activeEventDtoResponseFlux = activeEventsFlux
                 .map(activeEventDto -> new ActiveEventDtoResponse(
-                        activeEventDto.id(),
-                        activeEventDto.startTime(),
-                        activeEventDto.endTime(),
-                        activeEventDto.status(),
-                        activeEventDto.type(),
-                        (activeEventDto.type().equals("Тренажерный зал")
-                                || activeEventDto.type().equals("Зал")
-                                || activeEventDto.type().equals("Интернет"))
-                                && activeEventDto.status() == BookingStatus.BOOKED
-                ));
+                                activeEventDto.id(),
+                                activeEventDto.startTime(),
+                                activeEventDto.endTime(),
+                                activeEventDto.status(),
+                                activeEventDto.type(),
+                                CLOSABLE_EVENT_TYPES.contains(activeEventDto.type())
+                                        && activeEventDto.status() == BookingStatus.BOOKED
+                        )
+                );
 
+        // Преобразование всех данных в единую ДТО для ответа
         return Mono.zip(
                 userInfoMono,
                 balanceMono,
                 pediculosisMono,
                 fluorographyMono,
                 activeEventDtoResponseFlux.collectList()
-        ).map(tuple -> UserMapper.mapToUserResponseDto(
-                tuple.getT1(),
-                tuple.getT2(),
-                tuple.getT3(),
-                tuple.getT4(),
-                tuple.getT5()
-        ));
+        ).handle((tuple, sink) -> {
+            requestFailed.set(
+                    userRequestFailed.get()
+                            && balanceRequestFailed.get()
+                            && certificateRequestFailed.get()
+                            && fluorographyRequestFailed.get()
+            );
+            /*
+            Если провалились все запросы или все, кроме активных ивентов,
+            но при этом ивенты все равно пустые, то кидаем исключение.
+            Исключение во втором случае кидаем, так как ответ все равно будет пустым, как при падении всех запросов
+            */
+            if (currentErrorsCount.get() == MAX_ERRORS_COUNT_ON_GET_WHOLE_USER
+                    || (tuple.getT5().isEmpty() && requestFailed.get())) {
+                sink.error(new ServiceException.BadGateway("Сервис временно не доступен. Повторите попытку позже"));
+                return;
+            }
+            sink.next(UserMapper.mapToUserResponseDto(
+                    tuple.getT1(),
+                    tuple.getT2(),
+                    tuple.getT3().orElse(null),
+                    tuple.getT4().orElse(null),
+                    tuple.getT5()
+            ));
+        });
     }
 
+    private <T> Mono<T> handleMonoError(Throwable e, AtomicInteger counter, T defaultValue) {
+        counter.incrementAndGet();
+        logWarning(e);
+        return Mono.just(defaultValue);
+    }
 
+    private <T> Mono<Optional<T>> handleMonoError(Throwable e, AtomicInteger counter) {
+        counter.incrementAndGet();
+        logWarning(e);
+        return Mono.just(Optional.empty());
+    }
+
+    private <T> Flux<T> handleFluxError(Throwable e, AtomicInteger counter) {
+        counter.incrementAndGet();
+        logWarning(e);
+        return Flux.empty();
+    }
+
+    private void logWarning(Throwable e) {
+        log.warn("Ошибка запроса: {}", e.getMessage());
+    }
+
+    // На эту дичь даже смотреть не хочется
     @Override
     public Flux<AdminResponseDto> getAllUsers(
             Authentication authentication,
@@ -250,12 +392,14 @@ public class AgregationServiceImpl implements AgregationService {
                                     .toList();
 
                             return userClient.getAllUsersWithIdsShort(userIds)
+                                    .onErrorResume(e -> Flux.empty())
                                     .collectList()
                                     .map(users -> {
                                         List<UserShortResponseWithBookingIdDto> usersWithBookingIds = users.stream()
                                                 .map(user -> {
                                                     UUID bookingId = bookingsList.stream()
-                                                            .filter(booking -> booking.userId().equals(user.id()))
+                                                            .filter(booking ->
+                                                                    booking.userId().equals(user.id()))
                                                             .findFirst()
                                                             .map(ActiveEventWithUserDto::id)
                                                             .orElse(null);

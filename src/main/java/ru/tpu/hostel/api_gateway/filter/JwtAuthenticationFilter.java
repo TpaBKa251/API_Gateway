@@ -5,6 +5,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.ThreadContext;
+import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,9 +21,11 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SignalType;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("NullableProblems")
@@ -33,11 +37,17 @@ public class JwtAuthenticationFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        String method = exchange.getRequest().getMethod().name();
+        String path = exchange.getRequest().getURI().getPath();
+        log.info("[REQUEST] Получен запрос: {} {}", method, path);
+
         String token = extractToken(exchange.getRequest().getHeaders());
 
         if (token == null) {
             log.warn("Токен пустой");
-            return chain.filter(exchange);
+            final long startTime = System.currentTimeMillis();
+            return chain.filter(exchange).doFinally(signalType ->
+                    logResponse(exchange, signalType, startTime));
         }
 
         if (!validateToken(token)) {
@@ -50,8 +60,10 @@ public class JwtAuthenticationFilter implements WebFilter {
         return Mono.justOrEmpty(createAuthentication(claims))
                 .flatMap(authentication -> {
                     SecurityContext context = new SecurityContextImpl(authentication);
+                    final long startTime = System.currentTimeMillis();
                     return chain.filter(exchange)
-                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)));
+                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
+                            .doFinally(signalType -> logResponse(exchange, signalType, startTime));
                 });
     }
 
@@ -102,6 +114,19 @@ public class JwtAuthenticationFilter implements WebFilter {
                 .collect(Collectors.toList());
 
         return new UsernamePasswordAuthenticationToken(userId, claims, authorities);
+    }
+
+    private void logResponse(ServerWebExchange exchange, SignalType signalType, long startTime) {
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        int statusCode = Objects.requireNonNull(exchange.getResponse().getStatusCode()).value();
+        String logMsg = switch (signalType) {
+            case ON_COMPLETE -> "[RESPONSE] Запрос успешно выполнен, статус {}. Время выполнения: {} мс";
+            case ON_ERROR -> "[RESPONSE] Запрос выполнен с ошибкой, статус {}. Время выполнения: {} мс";
+            case CANCEL -> "[RESPONSE] Выполнение запроса закрыто, статус {}. Время выполнения: {} мс";
+            default -> "[RESPONSE] Выполнение запроса завершено: " + signalType
+                    + ", статус {}. Время выполнения: {} мс";
+        };
+        log.info(logMsg, statusCode, elapsedTime);
     }
 
 }

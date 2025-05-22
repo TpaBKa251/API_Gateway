@@ -8,8 +8,6 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import ru.tpu.hostel.api_gateway.service.AgregationService;
 
-import java.util.List;
-
 @Component
 @RequiredArgsConstructor
 public class AgregationController {
@@ -23,7 +21,7 @@ public class AgregationController {
                         agregationService.getWholeUser(authentication)
                                 .flatMap(response -> ServerResponse.ok().bodyValue(response))
                 )
-                .switchIfEmpty(ServerResponse.status(400).build());
+                .switchIfEmpty(ServerResponse.status(502).bodyValue("Сервис не доступен"));
     }
 
     public Mono<ServerResponse> getAllUsers(ServerRequest request) {
@@ -62,7 +60,7 @@ public class AgregationController {
                             .collectList()
                             .flatMap(users -> ServerResponse.ok().bodyValue(users));
                 })
-                .switchIfEmpty(ServerResponse.status(400).build());
+                .onErrorResume(throwable -> ServerResponse.status(502).bodyValue("Сервис не доступен"));
     }
 
     public Mono<ServerResponse> getAllBookingsWithUsers(ServerRequest request) {
@@ -73,8 +71,7 @@ public class AgregationController {
                 .cast(Authentication.class)
                 .flatMap(authentication -> agregationService.getAllBookings(bookingType, date)
                         .collectList()
-                        .flatMap(list -> ServerResponse.ok().bodyValue(list)))
-                .onErrorResume(e -> ServerResponse.ok().bodyValue(List.of()));
+                        .flatMap(list -> ServerResponse.ok().bodyValue(list)));
     }
 
     public Mono<ServerResponse> getAvailableTimeSlots(ServerRequest request) {

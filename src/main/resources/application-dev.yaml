@@ -41,3 +41,15 @@ spring:
           uri: http://localhost:8085
           predicates:
             - Path=/notifications/**
+
+otlp:
+  tracing:
+    export-enabled: false
+    endpoint: http://localhost:4317
+
+rest:
+  base-url:
+    user-service: http://localhost:8081
+    booking-service: http://localhost:8082
+    schedule-service: http://localhost:8084
+    admin-service: http://localhost:8083
