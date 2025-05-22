@@ -15,12 +15,6 @@ java {
     }
 }
 
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
-}
-
 repositories {
     mavenCentral()
 }
@@ -57,6 +51,7 @@ dependencies {
     implementation 'org.springframework.security:spring-security-oauth2-jose'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // Для актюаторов
+    implementation 'org.springframework.boot:spring-boot-configuration-processor' // Для работы с конфигурационными аннотациями
     implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.4.4'
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.37.0'
     implementation 'io.micrometer:micrometer-registry-prometheus'
@@ -69,7 +64,6 @@ dependencies {
     // Для работы с Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
     // Для тестирования
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

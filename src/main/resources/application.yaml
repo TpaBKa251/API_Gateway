@@ -24,7 +24,7 @@ spring:
   application:
     name: api-gateway
   profiles:
-    active: "@activatedProperties@"
+    active: "prod"
 
   cloud:
     gateway:
