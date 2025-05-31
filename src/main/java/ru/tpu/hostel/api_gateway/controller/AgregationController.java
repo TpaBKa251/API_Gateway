@@ -18,8 +18,8 @@ public class AgregationController {
         return request.principal()
                 .cast(Authentication.class)
                 .flatMap(authentication -> {
-                    String floor = request.queryParam("floor").orElse("");
-                    return agregationService.getWholeUser(authentication, floor)
+                    String room = request.queryParam("room").orElse("");
+                    return agregationService.getWholeUser(authentication, room)
                             .flatMap(response -> ServerResponse.ok().bodyValue(response));
 
                 })

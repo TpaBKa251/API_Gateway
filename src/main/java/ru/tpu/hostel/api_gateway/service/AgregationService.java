@@ -10,7 +10,7 @@ import ru.tpu.hostel.api_gateway.dto.WholeUserResponseDto;
 
 public interface AgregationService {
 
-    Mono<WholeUserResponseDto> getWholeUser(Authentication authentication, String floorFromRequest);
+    Mono<WholeUserResponseDto> getWholeUser(Authentication authentication, String roomFromRequest);
 
     Flux<AdminResponseDto> getAllUsers(
             Authentication authentication,

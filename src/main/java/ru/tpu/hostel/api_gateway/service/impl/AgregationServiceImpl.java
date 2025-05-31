@@ -101,7 +101,7 @@ public class AgregationServiceImpl implements AgregationService {
     private final JwtService jwtService;
 
     @Override
-    public Mono<WholeUserResponseDto> getWholeUser(Authentication authentication, String floorFromRequest) {
+    public Mono<WholeUserResponseDto> getWholeUser(Authentication authentication, String roomFromRequest) {
         AtomicInteger currentErrorsCount = new AtomicInteger(0);
         AtomicBoolean requestFailed = new AtomicBoolean(false);
         AtomicBoolean userRequestFailed = new AtomicBoolean(false);
@@ -162,9 +162,14 @@ public class AgregationServiceImpl implements AgregationService {
         Flux<ActiveEventDto> processedBookings = bookingsClient.getAllByStatus(BookingStatus.IN_PROGRESS, userId)
                 .onErrorResume(t -> handleFluxError(t, currentErrorsCount));
         Flux<ActiveEventDto> kitchenSchedules = userInfoMono.flatMapMany(user -> {
-                    String identifier = user.roomNumber().isEmpty()
-                            ? userId.toString() // неэффективный вариант
-                            : user.roomNumber(); // эффективный вариант
+                    String identifier;
+                    if (!roomFromRequest.isEmpty()) {
+                        identifier = roomFromRequest;
+                    } else {
+                        identifier = user.roomNumber().isEmpty()
+                                ? userId.toString() // неэффективный вариант
+                                : user.roomNumber(); // эффективный вариант
+                    }
                     return schedulesClient.getActiveKitchenSchedules(identifier);
                 })
                 .onErrorResume(t -> handleFluxError(t, currentErrorsCount));
