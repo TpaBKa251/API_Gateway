@@ -101,7 +101,7 @@ public class AgregationServiceImpl implements AgregationService {
     private final JwtService jwtService;
 
     @Override
-    public Mono<WholeUserResponseDto> getWholeUser(Authentication authentication) {
+    public Mono<WholeUserResponseDto> getWholeUser(Authentication authentication, String floorFromRequest) {
         AtomicInteger currentErrorsCount = new AtomicInteger(0);
         AtomicBoolean requestFailed = new AtomicBoolean(false);
         AtomicBoolean userRequestFailed = new AtomicBoolean(false);

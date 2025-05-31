@@ -17,10 +17,12 @@ public class AgregationController {
     public Mono<ServerResponse> getWholeUser(ServerRequest request) {
         return request.principal()
                 .cast(Authentication.class)
-                .flatMap(authentication ->
-                        agregationService.getWholeUser(authentication)
-                                .flatMap(response -> ServerResponse.ok().bodyValue(response))
-                )
+                .flatMap(authentication -> {
+                    String floor = request.queryParam("floor").orElse("");
+                    return agregationService.getWholeUser(authentication, floor)
+                            .flatMap(response -> ServerResponse.ok().bodyValue(response));
+
+                })
                 .switchIfEmpty(ServerResponse.status(502).bodyValue("Сервис не доступен"));
     }
 

@@ -12,8 +12,8 @@ public record WholeUserResponseDto(
         String roomNumber,
         List<String> role,
         BigDecimal balance,
-        CertificateDto fluorography,
         CertificateDto pediculosis,
+        CertificateDto fluorography,
         List<ActiveEventDtoResponse> activeEvents
 ) {
 }
