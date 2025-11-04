@@ -1,4 +1,4 @@
-FROM openjdk:21
+FROM openjdk:21-jdk
 WORKDIR /app
 
 ARG JAR_FILE=build/libs/*.jar
