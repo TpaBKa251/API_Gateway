@@ -32,7 +32,7 @@ sonarqube {
 }
 
 ext {
-    set('springCloudVersion', "2023.0.3") // Актуальная версия Spring Cloud для Spring Boot 3.x
+    set('springCloudVersion', "2025.0.0") // Актуальная версия Spring Cloud для Spring Boot 3.x
 }
 
 dependencyManagement {
