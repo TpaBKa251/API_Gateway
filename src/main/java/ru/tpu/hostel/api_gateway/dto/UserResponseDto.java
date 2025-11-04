@@ -9,6 +9,8 @@ public record UserResponseDto(
         String middleName,
         String email,
         String phoneNumber,
-        String roomNumber
+        String roomNumber,
+        String tgLink,
+        String vkLink
 ) {
 }

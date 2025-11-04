@@ -11,6 +11,8 @@ public record UserResponseWithRoleDto(
         String email,
         String phoneNumber,
         String roomNumber,
-        List<String> roles
+        List<String> roles,
+        String tgLink,
+        String vkLink
 ) {
 }

@@ -6,6 +6,8 @@ public record AvailableTimeSlotsDto(
         String responsibleFirstName,
         String responsibleLastName,
         String responsibleMiddleName,
-        List<TimeSlotResponseDto> timeSlotResponseDtos
+        List<TimeSlotResponseDto> timeSlotResponseDtos,
+        String tgLink,
+        String vkLink
 ) {
 }

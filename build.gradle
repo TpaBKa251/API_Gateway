@@ -46,7 +46,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.boot:spring-boot-starter-webflux' // WebFlux
-    implementation 'org.springframework.cloud:spring-cloud-starter-gateway' // Gateway
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux' // Gateway
     implementation 'org.springframework.boot:spring-boot-starter-security' // Для безопасности
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server' // Для JWT аутентификации
     implementation 'org.springframework.security:spring-security-oauth2-jose'

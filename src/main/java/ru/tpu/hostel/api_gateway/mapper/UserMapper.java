@@ -29,7 +29,9 @@ public class UserMapper {
                 balance,
                 pediculosis,
                 fluorography,
-                activeEvents
+                activeEvents,
+                userResponseWithRoleDto.tgLink(),
+                userResponseWithRoleDto.vkLink()
         );
     }
 }

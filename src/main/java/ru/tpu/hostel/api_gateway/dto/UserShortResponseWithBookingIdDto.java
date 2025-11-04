@@ -6,6 +6,8 @@ public record UserShortResponseWithBookingIdDto(
         String firstName,
         String lastName,
         String middleName,
-        UUID bookingId
+        UUID bookingId,
+        String tgLink,
+        String vkLink
 ) {
 }

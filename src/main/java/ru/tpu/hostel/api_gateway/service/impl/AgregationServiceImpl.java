@@ -55,7 +55,9 @@ public class AgregationServiceImpl implements AgregationService {
             "",
             "",
             "",
-            List.of()
+            List.of(),
+            "",
+            ""
     );
 
     private static final CertificateDto DEFAULT_CERTIFICATE_DTO = new CertificateDto(
@@ -413,15 +415,17 @@ public class AgregationServiceImpl implements AgregationService {
                                                             user.firstName(),
                                                             user.lastName(),
                                                             user.middleName(),
-                                                            bookingId
+                                                            bookingId,
+                                                            user.tgLink(),
+                                                            user.vkLink()
                                                     );
                                                 })
                                                 .toList();
 
                                         return new BookingResponseWithUsersDto(
-                                                bookingsList.get(0).startTime(),
-                                                bookingsList.get(0).endTime(),
-                                                bookingsList.get(0).type(),
+                                                bookingsList.getFirst().startTime(),
+                                                bookingsList.getFirst().endTime(),
+                                                bookingsList.getFirst().type(),
                                                 usersWithBookingIds
                                         );
                                     });
@@ -444,7 +448,9 @@ public class AgregationServiceImpl implements AgregationService {
                 tuple.getT1().firstName(),
                 tuple.getT1().lastName(),
                 tuple.getT1().middleName(),
-                tuple.getT2().timeSlots()
+                tuple.getT2().timeSlots(),
+                tuple.getT1().tgLink(),
+                tuple.getT1().vkLink()
         ));
     }
 }
