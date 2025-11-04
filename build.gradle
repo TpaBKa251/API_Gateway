@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.3.5'
+    id 'org.springframework.boot' version '3.5.0'
     id 'io.spring.dependency-management' version '1.1.6'
     id "org.sonarqube" version "5.1.0.4882"
     id 'jacoco'
@@ -43,6 +43,7 @@ dependencyManagement {
 
 dependencies {
     // Основные зависимости для WebFlux и Gateway
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.boot:spring-boot-starter-webflux' // WebFlux
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway' // Gateway
@@ -55,6 +56,8 @@ dependencies {
     implementation 'io.micrometer:micrometer-tracing-bridge-otel:1.4.4'
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.37.0'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.projectreactor.addons:reactor-extra:3.5.2'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.2.0'
 
     // Зависимости для JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'

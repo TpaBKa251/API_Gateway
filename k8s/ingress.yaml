@@ -16,7 +16,7 @@ spec:
                 name: gateway
                 port:
                   number: 80  # Сервер слушает на порту 80, но будет направлен на 443 через Ingress
-  tls:
-    - hosts:
-        - api-obshaga-service.ru
-      secretName: my-ssl-secret  # Это имя Kubernetes секрета, который содержит SSL сертификат
+#  tls:
+#    - hosts:
+#        - api-obshaga-service.ru
+#      secretName: my-ssl-secret  # Это имя Kubernetes секрета, который содержит SSL сертификат

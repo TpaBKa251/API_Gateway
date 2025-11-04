@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,17 @@ public class JwtService {
                     return roleStr;
                 })
                 .collect(Collectors.joining(","));
+    }
+
+    public List<String> getListRolesFromToken(Authentication authentication) {
+        return authentication.getAuthorities()
+                .stream()
+                .map(role -> {
+                    String roleStr = role.toString();
+                    roleStr = roleStr.replace("ROLE_", "");
+                    return roleStr;
+                })
+                .toList();
     }
 
     private Key getSigningKey() {
