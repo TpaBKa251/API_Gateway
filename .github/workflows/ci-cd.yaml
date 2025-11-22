@@ -58,7 +58,9 @@ jobs:
           distribution: 'zulu'
           cache: gradle
       - name: Run tests
-        run: ./gradlew test --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew test --no-daemon
 
   dockerized:
     name: Build and run in Docker
