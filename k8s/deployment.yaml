@@ -15,7 +15,9 @@ spec:   # Запускаем 1 новый pod перед удалением ст
       labels:
         app: gateway
     spec:
-      automountServiceAccountToken: false  # отключаем автоматическое монтирование, если не нужно
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: "vm-8ca664"  # Прямое указание ноды
       containers:
         - name: gateway
           image: ghcr.io/tpabka251/gateway:latest
