@@ -3,13 +3,10 @@ kind: Ingress
 metadata:
   name: gateway-ingress
   annotations:
-    nginx.ingress.kubernetes.io/auth-response-headers: "Authorization"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/auth-response-headers: "Authorization" # если нужно передавать авторизационные заголовки
 spec:
-  ingressClassName: nginx # Укажите класс вашего Ingress
   rules:
-    - host: api-obshaga-service.ru
+    - host: api-obshaga-service.ru  # укажи свой домен
       http:
         paths:
           - path: /
@@ -18,8 +15,8 @@ spec:
               service:
                 name: gateway
                 port:
-                  number: 80 # Ваш сервис слушает HTTP на порту 80
-  tls: # Раскомментируйте и настройте этот блок
-    - hosts:
-        - api-obshaga-service.ru
-      secretName: gateway-tls-secret # cert-manager автоматически создаст секрет с этим именем
+                  number: 80  # Сервер слушает на порту 80, но будет направлен на 443 через Ingress
+#  tls:
+#    - hosts:
+#        - api-obshaga-service.ru
+#      secretName: my-ssl-secret  # Это имя Kubernetes секрета, который содержит SSL сертификат
