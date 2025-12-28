@@ -19,8 +19,15 @@ spec:
               service:
                 name: gateway
                 port:
-                  number: 80 # Ваш сервис слушает HTTP на порту 80
-  tls: # Раскомментируйте и настройте этот блок
+                  number: 80
+          - path: /grafana  # Путь для Grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana-external
+                port:
+                  number: 80
+  tls:
     - hosts:
         - api-obshaga-service.ru
-      secretName: gateway-tls-secret # cert-manager автоматически создаст секрет с этим именем
+      secretName: gateway-tls-secret
