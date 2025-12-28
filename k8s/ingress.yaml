@@ -6,7 +6,9 @@ metadata:
     nginx.ingress.kubernetes.io/auth-response-headers: "Authorization"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/http01-ingress-class: "traefik"
 spec:
+  ingressClassName: traefik
   rules:
     - host: api-obshaga-service.ru
       http:
