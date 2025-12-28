@@ -6,10 +6,6 @@ metadata:
     nginx.ingress.kubernetes.io/auth-response-headers: "Authorization"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      location ~ "^/\.well-known/acme-challenge/" {
-        return 404;
-      }
 spec:
   ingressClassName: nginx # Укажите класс вашего Ingress
   rules:
