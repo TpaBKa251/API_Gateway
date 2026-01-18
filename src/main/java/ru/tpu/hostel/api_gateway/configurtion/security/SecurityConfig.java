@@ -91,6 +91,7 @@ public class SecurityConfig {
                                 "FLOOR_SUPERVISOR"
                         )
                         .pathMatchers(HttpMethod.POST, "/users").permitAll()
+                        .pathMatchers(HttpMethod.PATCH, "/contacts/links").permitAll()
                         .pathMatchers(HttpMethod.POST, "/sessions").permitAll()
                         .pathMatchers(HttpMethod.GET, "/sessions/auth/token").permitAll()
                         .pathMatchers(HttpMethod.POST, "/sessions/auth/token").permitAll()
